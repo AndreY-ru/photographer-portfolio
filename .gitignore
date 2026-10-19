@@ -1,0 +1,40 @@
+# Секреты — никогда не должны попадать в репозиторий/архив
+.env
+.vscode/
+*.zip
+
+# Пути хостинга с логином аккаунта — в репозитории лежат образцы *.example
+.htaccess
+passenger_wsgi.py
+
+# Виртуальное окружение и кэш Python
+venv/
+__pycache__/
+*.pyc
+*.log
+
+# Служебное
+tmp/
+public_html/
+.claude/
+.agents/
+skills-lock.json
+Thumbs.db
+desktop.ini
+
+# Загруженные фото (клиентские альбомы, аватар, дипломы) — только на сервере
+scr/static/uploads/*
+!scr/static/uploads/.gitkeep
+
+# БД: дамп содержит персональные данные и хэш пароля. В репозитории только
+# структура (db/schema.sql) и SQL-изменения схемы (db/ГГГГ-ММ-ДД_*.sql)
+db/*
+!db/schema.sql
+!db/20[0-9][0-9]-*.sql
+
+# Скриншоты и логи Playwright MCP (отладка)
+.playwright-mcp/
+
+# Прототипы дизайна: окружение тестового сервера и твои реальные дипломы
+prototypes/.venv/
+prototypes/about-awards/*.jpg

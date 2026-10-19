@@ -1,0 +1,82 @@
+/* ПРОТОТИП: место на сервере в админке */
+.st svg, .st-chip svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.st { margin: 14px 0 12px; padding: 14px; border-radius: 12px; background: var(--a-raised); border: 1px solid var(--a-line); color: var(--a-text); font: 500 0.8rem var(--font-ui); }
+.st-ico { width: 16px; height: 16px; flex: none; }
+.st-seg--albums { background: var(--a-accent); stroke: var(--a-accent); }
+.st-seg--images { background: color-mix(in srgb, var(--a-accent) 45%, var(--a-muted)); stroke: color-mix(in srgb, var(--a-accent) 45%, var(--a-muted)); }
+.st-seg--site { background: var(--a-muted); stroke: var(--a-muted); }
+.st-seg--db { background: var(--a-ok); stroke: var(--a-ok); }
+.st-bar { display: flex; gap: 2px; height: 6px; border-radius: 3px; background: var(--a-line); overflow: hidden; }
+.st-bar i { display: block; height: 100%; }
+.st.is-warn .st-seg--albums, .st-chip.is-warn .st-seg--albums { background: var(--a-warn); }
+.st.is-danger .st-seg--albums, .st-chip.is-danger .st-seg--albums { background: var(--a-danger); }
+.st-legend { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.st-legend li { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; align-items: center; gap: 8px; color: var(--a-muted); font-size: 0.76rem; }
+.st-legend b { color: var(--a-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.st-dot { width: 8px; height: 8px; border-radius: 50%; }
+.st-top { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--a-line); }
+.st-top p { margin: 0 0 6px; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--a-muted); }
+.st-top-row { display: flex; width: 100%; gap: 8px; justify-content: space-between; padding: 5px 6px; margin: 0 -6px; width: calc(100% + 12px);
+  border: 0; border-radius: 6px; background: none; color: var(--a-text); font: inherit; font-size: 0.78rem; cursor: pointer; text-align: left; }
+.st-top-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-top-row b { font-weight: 600; color: var(--a-muted); font-variant-numeric: tabular-nums; }
+.st-top-row:hover { background: var(--a-hover); color: var(--a-accent); }
+
+/* А — накопитель */
+.st-head { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+.st-head span { flex: 1; font-weight: 600; }
+.st-head b { font-weight: 600; color: var(--a-muted); font-variant-numeric: tabular-nums; }
+.st-free { margin: 7px 0 0; color: var(--a-muted); font-size: 0.75rem; }
+.st.is-warn .st-free { color: var(--a-warn); }
+.st.is-danger .st-free { color: var(--a-danger); font-weight: 600; }
+.st-more { margin-top: 8px; }
+.st-more summary { cursor: pointer; color: var(--a-muted); font-size: 0.74rem; list-style: none; }
+.st-more summary::after { content: ' ▾'; }
+.st-more[open] summary::after { content: ' ▴'; }
+.st-more summary:hover { color: var(--a-accent); }
+
+/* Б — карта памяти */
+.st-b .st { padding: 10px 12px; }
+.st-sd { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; padding: 0; text-align: left; }
+.st-card svg { width: 30px; height: 39px; display: block; }
+.st-card-shape { fill: none; stroke: var(--a-line-strong); stroke-width: 2; }
+.st-card-fill { fill: var(--a-accent); stroke: none; opacity: .85; }
+.st.is-warn .st-card-fill { fill: var(--a-warn); }
+.st.is-danger .st-card-fill { fill: var(--a-danger); }
+.st-card-pins { stroke: var(--a-panel); stroke-width: 2; }
+.st-sd-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.st-sd-text b { font-size: 0.95rem; font-weight: 700; }
+.st-sd-text small, .st-ring-row small { color: var(--a-muted); font-size: 0.72rem; }
+.st-chev { width: 16px; height: 16px; color: var(--a-muted); transition: transform .2s; }
+.st-sd[aria-expanded="true"] .st-chev { transform: rotate(180deg); }
+.st-drop { margin-top: 12px; }
+
+/* В — кольцо */
+.st-ring-row { display: flex; align-items: center; gap: 12px; }
+.st-ring-row > div { display: flex; flex-direction: column; gap: 2px; }
+.st-ring-row b { font-size: 0.95rem; font-weight: 700; }
+.st-ring { width: 64px; height: 64px; flex: none; }
+.st-track { fill: none; stroke: var(--a-line); stroke-width: 7; }
+.st-arc { fill: none; stroke-width: 7; background: none; }
+.st-ring text { fill: var(--a-text); stroke: none; font: 700 12px var(--font-ui); }
+
+/* Вес альбома на карточке */
+.st-album { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.st-album-bar { display: inline-block; width: 42px; height: 4px; border-radius: 2px; background: var(--a-line); overflow: hidden; }
+.st-album-bar i { display: block; height: 100%; background: var(--a-accent); }
+
+/* Телефон: строка в шапке «Галерей» (на ПК скрыта — там боковая панель) */
+.st-chip { display: none; }
+@media (max-width: 760px) {
+  .st-chip { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 6px 8px; width: 100%; margin: -6px 0 14px; padding: 10px 12px;
+    border-radius: 10px; border: 1px solid var(--a-line); background: var(--a-raised); color: var(--a-text); font: 600 0.8rem var(--font-ui); cursor: pointer; text-align: left; }
+  .st-chip .st-ico { width: 15px; height: 15px; }
+  .st-chip .st-bar { grid-column: 1 / -1; }
+  .st-chip.is-warn { border-color: var(--a-warn); }
+  .st-chip.is-danger { border-color: var(--a-danger); }
+  .st--more { margin: 0 0 12px; }
+}
+
+/* ПК: блок памяти прижат к низу панели, над темой */
+.st--side { margin-top: auto; }
+.st--side + .theme-switch { margin-top: 0; }

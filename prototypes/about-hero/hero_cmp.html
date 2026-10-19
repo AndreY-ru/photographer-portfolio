@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Первый блок «Обо мне»</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Manrope:wght@500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #0c0c0d; color: #eae6dc; font: 500 14px 'Manrope', sans-serif; }
+  header { padding: 18px 28px 6px; }
+  h1 { margin: 0 0 4px; font: 600 1.9rem 'Cormorant Garamond', serif; }
+  p { margin: 0; color: #8f8a80; max-width: 1060px; line-height: 1.5; }
+  .pick { display: flex; gap: 8px; padding: 14px 28px; flex-wrap: wrap; }
+  .pick button { text-align: left; border: 1px solid rgba(234,230,220,.14); background: none; color: #8f8a80; border-radius: 12px;
+    padding: 9px 14px; cursor: pointer; font: inherit; font-size: 12.5px; max-width: 300px; }
+  .pick button strong { display: block; color: #eae6dc; font: 600 1.1rem 'Cormorant Garamond', serif; margin-bottom: 2px; }
+  .pick button[aria-pressed="true"] { border-color: #e6b322; background: rgba(230,179,34,.07); }
+  .pick .star { border-color: rgba(230,179,34,.55); }
+  .row { display: flex; gap: 36px; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 4px 28px 24px; }
+  figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  figcaption { color: #8f8a80; }
+  figcaption a { color: #e6b322; }
+  .desk { --s: .55; width: calc(1440px * var(--s)); height: calc(900px * var(--s)); overflow: hidden; border-radius: 10px; box-shadow: 0 0 0 1px #2a2a2c; }
+  .desk iframe { width: 1440px; height: 900px; border: 0; transform: scale(var(--s)); transform-origin: 0 0; }
+  .phone { --s: .6; width: calc(390px * var(--s) + 16px); height: calc(844px * var(--s) + 16px); padding: 8px; border-radius: 36px; background: #000;
+    box-shadow: 0 0 0 2px #2a2a2c; overflow: hidden; }
+  .phone iframe { width: 390px; height: 844px; border: 0; border-radius: 30px; transform: scale(var(--s)); transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Первый блок «Обо мне» — все варианты</h1>
+  <p>Тексты твои, как сейчас на сайте. Окна живые. Чтобы открыть вариант на весь экран — ссылка под окном компьютера.</p>
+</header>
+<div class="pick" id="pick">
+  <button class="star" data-v="ho"><strong>О — Лапка Хоро ★</strong>Полароид без надписи. Снизу выглядывает волчья лапка и трясёт его сама, несколько раз и с разной силой, потом прячется и иногда возвращается позвать: потрясти, потыкать, помахать. Проявится — довольно похлопает.</button>
+  <button class="star" data-v="hn"><strong>Н — Видоискатель → полароид ★</strong>Наводишь фокус, жмёшь — щелчок, вспышка, и из-под кадра выезжает полароид с тем, на что навёл. Встряхни — проявится. До трёх снимков веером, их можно хватать.</button>
+  <button data-v="ha"><strong>А — Кадр</strong>Портрет во всю ширину с данными видоискателя, рамка автофокуса ловит лицо, заголовок на фото.</button>
+  <button data-v="hb"><strong>Б — Профиль</strong>Разворот журнала: заголовок, первая фраза курсивом, портрет, справка «Сейчас / Снимаю / Заказы».</button>
+  <button data-v="hc"><strong>В — Проявка</strong>Портрет проявляется из негатива под красным светом, заголовок заходит на фото.</button>
+  <button data-v="hd"><strong>Г — Раскадровка</strong>Три кадра разной крупности, каждый абзац — подпись к своему кадру.</button>
+  <button data-v="he"><strong>Д — Полароид</strong>Полароид на скотче с подписью «это я», текст рядом, как письмо.</button>
+  <button data-v="hf"><strong>Е — Афиша</strong>Огромный заголовок, портрет узкой полосой между строк.</button>
+  <button data-v="hg"><strong>Ж — Наведи фокус</strong>Автофокус ловит лицо, дальше фокус следует за мышью или пальцем, нажатие — затвор.</button>
+  <button data-v="hh"><strong>З — Встряхни полароид</strong>Непроявленный полароид: хватай и тряси — проявится быстрее.</button>
+  <button data-v="hi"><strong>И — Диафрагма</strong>Лепестки диафрагмы открываются, кольцо можно крутить.</button>
+  <button data-v="hk"><strong>К — Проявитель кистью</strong>Стираешь эмульсию мышью или пальцем — открывается снимок.</button>
+  <button data-v="hl"><strong>Л — Взвод затвора</strong>Каждый спуск — шторка, новый кадр и следующий абзац.</button>
+  <button data-v="hm"><strong>М — Рисуй светом</strong>Портрет в темноте, свет следует за мышью или пальцем.</button>
+</div>
+<div class="row">
+  <figure><div class="desk"><iframe id="fd" title="На компьютере"></iframe></div><figcaption>На компьютере · <a id="full" href="#" target="_blank">открыть на весь экран</a></figcaption></figure>
+  <figure><div class="phone"><iframe id="fp" title="На телефоне"></iframe></div><figcaption>На телефоне</figcaption></figure>
+</div>
+<script>
+  const pick = document.getElementById('pick');
+  const show = v => {
+    document.getElementById('fd').src = `/about?v=${v}`;
+    document.getElementById('fp').src = `/about?v=${v}`;
+    document.getElementById('full').href = `/about?v=${v}`;
+    pick.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  };
+  pick.addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(b.dataset.v); });
+  show(new URLSearchParams(location.search).get('v') || 'ho');
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Срок альбома и лайки</title>
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<style>
+  body { margin: 0; background: #0c0c0d; color: #eae6dc; font: 500 14px 'Manrope', sans-serif; }
+  header { padding: 18px 28px 4px; }
+  h1 { margin: 0 0 4px; font: 600 1.9rem 'Cormorant Garamond', serif; }
+  p { margin: 0; color: #8f8a80; max-width: 1060px; line-height: 1.5; }
+  .bar { display: flex; gap: 22px; padding: 12px 28px; flex-wrap: wrap; align-items: flex-start; }
+  .grp { display: flex; flex-direction: column; gap: 6px; }
+  .grp > span { font: 600 11px 'Manrope'; letter-spacing: .14em; text-transform: uppercase; color: #8f8a80; }
+  .opts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .opts button { text-align: left; border: 1px solid rgba(234,230,220,.14); background: none; color: #8f8a80; border-radius: 10px; padding: 8px 12px; cursor: pointer; font: inherit; font-size: 12.5px; max-width: 260px; }
+  .opts button strong { display: block; color: #eae6dc; font: 600 1.05rem 'Cormorant Garamond', serif; }
+  .opts button[aria-pressed="true"] { border-color: #e6b322; background: rgba(230,179,34,.07); }
+  .row { display: flex; gap: 36px; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 4px 28px 24px; }
+  figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  figcaption { color: #8f8a80; } figcaption a { color: #e6b322; }
+  .desk { --s: .55; width: calc(1440px * var(--s)); height: calc(900px * var(--s)); overflow: hidden; border-radius: 10px; box-shadow: 0 0 0 1px #2a2a2c; }
+  .desk iframe { width: 1440px; height: 900px; border: 0; transform: scale(var(--s)); transform-origin: 0 0; }
+  .phone { --s: .6; width: calc(390px * var(--s) + 16px); height: calc(844px * var(--s) + 16px); padding: 8px; border-radius: 36px; background: #000; box-shadow: 0 0 0 2px #2a2a2c; overflow: hidden; }
+  .phone iframe { width: 390px; height: 844px; border: 0; border-radius: 30px; transform: scale(var(--s)); transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Срок до удаления и лайки других</h1>
+  <p>Выбери вид срока и вид лайков отдельно. Срок показан на карточках галереи и на обложке альбома (в тестовых данных: «Мику» — 5 дней, «Закат» — 1 день, «Фонтан» — последний день, «Парк» — без срока). Лайки — в альбоме: число людей, отметивших фото (без имён). Сердечко можно нажимать — число меняется. Дубликаты при загрузке — <a href="/_proto/album-extras/dupes" style="color:#e6b322" target="_blank">отдельной страницей</a>.</p>
+</header>
+<div class="bar">
+  <div class="grp"><span>Срок до удаления</span><div class="opts" data-key="exp">
+    <button data-val="a"><strong>А — Таблетка</strong>«Ещё 5 дней» с часиками; за 3 дня — жёлтая, в последний день — красная.</button>
+    <button data-val="b"><strong>Б — Таймер REC</strong>Как данные видоискателя: «● 05 дней до удаления», точка мигает, когда мало.</button>
+    <button data-val="c"><strong>В — Плёнка кончается</strong>Полоска, сколько срока осталось, и дата: «Удалится 18 октября · ещё 5 дней».</button>
+  </div></div>
+  <div class="grp"><span>Лайки</span><div class="opts" data-key="like">
+    <button data-val="a"><strong>А — Цифра у сердечка</strong>Число рядом с сердечком и маленькая метка «♥ 3» в углу фото, видна всегда.</button>
+    <button data-val="b"><strong>Б — Сердечко с числом</strong>В углу фото сердечко, внутри число; твоё — залито золотом.</button>
+    <button data-val="c"><strong>В — Пометка карандашом</strong>Как фотограф отмечает кадры на контактном листе: число, обведённое от руки.</button>
+  </div></div>
+  <div class="grp"><span>Страница</span><div class="opts" data-key="page">
+    <button data-val="/album/miku"><strong>Альбом «Мику»</strong>5 дней</button>
+    <button data-val="/album/zakat"><strong>Альбом «Закат»</strong>1 день</button>
+    <button data-val="/gallery"><strong>Галерея</strong>карточки</button>
+  </div></div>
+</div>
+<div class="row">
+  <figure><div class="desk"><iframe id="fd" title="На компьютере"></iframe></div><figcaption>На компьютере · <a id="full" href="#" target="_blank">открыть на весь экран</a></figcaption></figure>
+  <figure><div class="phone"><iframe id="fp" title="На телефоне"></iframe></div><figcaption>На телефоне</figcaption></figure>
+</div>
+<script>
+  const st = { exp: 'a', like: 'a', page: '/album/miku' };
+  const show = () => {
+    const url = `${st.page}?v=ex&exp=${st.exp}&like=${st.like}`;
+    document.getElementById('fd').src = url; document.getElementById('fp').src = url; document.getElementById('full').href = url;
+    document.querySelectorAll('.opts').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(st[g.dataset.key] === b.dataset.val))));
+  };
+  document.querySelectorAll('.opts').forEach(g => g.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { st[g.dataset.key] = b.dataset.val; show(); } }));
+  show();
+</script>
+</body>
+</html>

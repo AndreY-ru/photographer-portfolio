@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Дубликаты при загрузке</title>
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<link rel="stylesheet" href="/static/css/admin.css">
+<style>
+  body { margin: 0; background: var(--a-bg); color: var(--a-text); font: 500 14px var(--font-ui, 'Manrope'), sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 22px 20px 60px; display: flex; flex-direction: column; gap: 18px; }
+  h1 { margin: 0; font: 600 1.8rem 'Cormorant Garamond', serif; }
+  .lead { margin: 0; color: var(--a-muted); max-width: 70ch; line-height: 1.55; }
+  .pick { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pick button, .btn { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--a-line-strong); background: var(--a-panel); color: var(--a-text); padding: 9px 14px; }
+  .pick button[aria-pressed="true"] { border-color: var(--a-accent); background: rgba(230,179,34,.08); }
+  .pick button strong { display: block; font: 600 1.05rem 'Cormorant Garamond', serif; }
+  .pick button span { color: var(--a-muted); font-size: 12.5px; }
+  .zone { border: 1px dashed var(--a-line-strong); border-radius: 14px; padding: 26px; text-align: center; color: var(--a-muted); display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .btn-accent { background: var(--a-accent); color: var(--a-on-accent); border-color: var(--a-accent); font-weight: 700; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .grid figure { margin: 0; position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--a-raised); }
+  .grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .grid figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 6px 4px; font-size: 10.5px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.7)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .grid figure.is-new { outline: 2px solid var(--a-ok); }
+  .grid figure.is-replaced { outline: 2px solid var(--a-accent); }
+  .grid figure .tag { position: absolute; top: 6px; left: 6px; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; background: var(--a-accent); color: var(--a-on-accent); }
+  .grid figure.is-new .tag { background: var(--a-ok); color: #06231d; }
+  .toast { padding: 12px 16px; border-radius: 10px; background: var(--a-panel); border: 1px solid var(--a-line); color: var(--a-text); }
+
+  /* окно */
+  .dlg-back { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 16px; }
+  .dlg { width: min(640px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--a-panel); border: 1px solid var(--a-line); border-radius: 16px; box-shadow: var(--a-shadow); display: flex; flex-direction: column; }
+  .dlg-head { padding: 20px 22px 6px; display: flex; flex-direction: column; gap: 6px; }
+  .dlg-head h2 { margin: 0; font: 600 1.45rem 'Cormorant Garamond', serif; }
+  .dlg-head p { margin: 0; color: var(--a-muted); font-size: 13px; line-height: 1.5; }
+  .dlg-body { padding: 12px 22px; display: flex; flex-direction: column; gap: 10px; }
+  .dlg-foot { padding: 14px 22px 18px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--a-line); flex-wrap: wrap; }
+  .seg3 { display: inline-flex; border: 1px solid var(--a-line-strong); border-radius: 9px; overflow: hidden; flex: none; }
+  .seg3 button { font: 600 12px var(--font-ui, 'Manrope'); border: 0; background: transparent; color: var(--a-muted); padding: 7px 10px; cursor: pointer; }
+  .seg3 button + button { border-left: 1px solid var(--a-line-strong); }
+  .seg3 button[aria-pressed="true"] { background: var(--a-accent); color: var(--a-on-accent); }
+  .seg3 button[data-act="skip"][aria-pressed="true"] { background: var(--a-raised); color: var(--a-text); }
+  .row { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--a-line); }
+  .row img { width: 54px; height: 54px; object-fit: cover; border-radius: 6px; }
+  .row b { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row small { color: var(--a-muted); font-size: 11.5px; }
+  .all { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--a-muted); }
+  .hint { font-size: 12px; color: var(--a-muted); line-height: 1.5; background: var(--a-raised); border-radius: 9px; padding: 10px 12px; }
+  .hint b { color: var(--a-text); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pair figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+  .pair img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 9px; background: var(--a-raised); }
+  .pair figcaption { font-size: 11.5px; color: var(--a-muted); }
+  .choice { display: grid; gap: 8px; }
+  .choice button { text-align: left; font: inherit; cursor: pointer; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--a-line-strong); background: var(--a-raised); color: var(--a-text); display: flex; flex-direction: column; gap: 2px; }
+  .choice button small { color: var(--a-muted); font-size: 12px; font-weight: 500; }
+  .choice button.is-main { border-color: var(--a-accent); background: rgba(230,179,34,.08); }
+  .choice button:hover { border-color: var(--a-accent); }
+  .step { font-size: 11.5px; color: var(--a-muted); letter-spacing: .08em; text-transform: uppercase; }
+  label.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
+  .link { background: none; border: 0; color: var(--a-muted); cursor: pointer; font: inherit; text-decoration: underline; padding: 8px 4px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 44px minmax(0, 1fr); } .row img { width: 44px; height: 44px; } .row .seg3 { grid-column: 1 / -1; } .pair { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Дубликаты при загрузке фото</h1>
+  <p class="lead">Нажми «Выбрать файлы»: в тестовом выборе 5 файлов, 3 из них уже есть в альбоме (совпадает имя файла). «Заменить» оставляет фото на его месте в сетке, с фокусом, пропорцией и сердечками клиентов — меняется только сам снимок.</p>
+  <div class="pick" id="pick">
+    <button data-v="a"><strong>А — Список</strong><span>Все совпадения в одном окне, у каждого свой выбор и «для всех» сверху.</span></button>
+    <button data-v="b"><strong>Б — По одному</strong><span>Спрашивает про каждый файл: старое и новое фото рядом, три кнопки и «так же для остальных».</span></button>
+  </div>
+  <div class="zone"><span>Перетащите фото сюда или</span><button class="btn btn-accent" id="go">Выбрать файлы</button></div>
+  <div id="toast"></div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+(async () => {
+  const V = new URLSearchParams(location.search).get('d') || 'a';
+  document.querySelectorAll('#pick button').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.v === V));
+    b.onclick = () => { location.search = '?d=' + b.dataset.v; };
+  });
+  // Фото «альбома» — из тестового альбома на этом же сайте
+  const html = await (await fetch('/album/miku')).text();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const photos = [...doc.querySelectorAll('.photo-card img')].slice(0, 12).map(img => {
+    const src = img.getAttribute('src'); const file = decodeURIComponent(src.split('/').pop()).replace(/^[0-9a-f]{8}_/, '');
+    return { src, name: file };
+  });
+  const grid = document.getElementById('grid');
+  const paintGrid = () => {
+    grid.innerHTML = photos.map(p => `<figure class="${p.state ? 'is-' + p.state : ''}">${p.state ? `<span class="tag">${p.state === 'new' ? 'новое' : 'заменено'}</span>` : ''}<img src="${p.src}" alt=""><figcaption>${p.name}</figcaption></figure>`).join('');
+  };
+  paintGrid();
+  // Тестовый выбор: 3 совпадают по имени, 2 новых
+  const picked = () => [photos[1], photos[4], photos[7]].map(p => ({ name: p.name, dup: p })).concat([{ name: 'Новое_фото_01.jpg' }, { name: 'Новое_фото_02.jpg' }]);
+
+  const LABEL = { replace: 'Заменить', copy: 'Копия', skip: 'Пропустить' };
+  const finish = (files, acts) => {
+    let r = 0, c = 0, s = 0, n = 0;
+    files.forEach((f, i) => {
+      if (!f.dup) { photos.push({ src: photos[(i * 3) % photos.length].src, name: f.name, state: 'new' }); n++; return; }
+      const a = acts[i];
+      if (a === 'replace') { f.dup.state = 'replaced'; r++; }
+      if (a === 'copy') { photos.push({ src: f.dup.src, name: f.name, state: 'new' }); c++; }
+      if (a === 'skip') s++;
+    });
+    paintGrid();
+    document.getElementById('toast').innerHTML = `<div class="toast">Загружено новых: ${n} · заменено: ${r} · копий: ${c} · пропущено: ${s}</div>`;
+  };
+  const close = () => document.querySelector('.dlg-back')?.remove();
+  const cancel = () => { close(); document.getElementById('toast').innerHTML = '<div class="toast">Загрузка отменена — ничего не загружено.</div>'; };
+
+  function openA(files) {
+    const dups = files.map((f, i) => [f, i]).filter(([f]) => f.dup);
+    const acts = files.map(f => f.dup ? 'replace' : 'new');
+    const back = document.createElement('div'); back.className = 'dlg-back';
+    back.innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-t">
+      <div class="dlg-head"><h2 id="dlg-t">${dups.length} ${dups.length === 1 ? 'файл уже есть' : 'файла уже есть'} в альбоме</h2>
+        <p>Остальные ${files.length - dups.length} загрузятся как обычно. Выберите, что сделать с совпадениями.</p></div>
+      <div class="dlg-body">
+        <div class="all">Для всех: <span class="seg3" id="all">${Object.entries(LABEL).map(([k, v]) => `<button data-act="${k}">${v}</button>`).join('')}</span></div>
+        ${dups.map(([f, i]) => `<div class="row"><img src="${f.dup.src}" alt=""><div><b>${f.name}</b><small>в альбоме с таким же именем</small></div>
+          <span class="seg3" data-i="${i}">${Object.entries(LABEL).map(([k, v]) => `<button data-act="${k}" aria-pressed="${k === 'replace'}">${v}</button>`).join('')}</span></div>`).join('')}
+        <p class="hint"><b>Заменить</b> — фото останется на своём месте, с фокусом и сердечками клиентов, сменится только снимок. <b>Копия</b> — загрузится ещё одним фото в конец. <b>Пропустить</b> — этот файл не загружать.</p>
+      </div>
+      <div class="dlg-foot"><button class="btn" id="cancel">Отмена</button><button class="btn btn-accent" id="ok">Продолжить загрузку</button></div></div>`;
+    document.body.appendChild(back);
+    const sync = () => back.querySelectorAll('.seg3[data-i]').forEach(s => s.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.act === acts[s.dataset.i]))));
+    back.querySelectorAll('.seg3[data-i] button').forEach(b => b.onclick = () => { acts[b.parentElement.dataset.i] = b.dataset.act; sync(); });
+    back.querySelectorAll('#all button').forEach(b => b.onclick = () => { dups.forEach(([, i]) => { acts[i] = b.dataset.act; }); sync(); });
+    back.querySelector('#cancel').onclick = cancel;
+    back.querySelector('#ok').onclick = () => { close(); finish(files, acts); };
+    back.onclick = e => { if (e.target === back) cancel(); };
+  }
+
+  function openB(files) {
+    const dups = files.map((f, i) => [f, i]).filter(([f]) => f.dup);
+    const acts = files.map(f => f.dup ? null : 'new');
+    let k = 0;
+    const back = document.createElement('div'); back.className = 'dlg-back';
+    document.body.appendChild(back);
+    const ask = () => {
+      if (k >= dups.length) { close(); finish(files, acts); return; }
+      const [f, i] = dups[k], left = dups.length - k - 1;
+      back.innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-t">
+        <div class="dlg-head"><span class="step">Совпадение ${k + 1} из ${dups.length}</span><h2 id="dlg-t">«${f.name}» уже есть в альбоме</h2></div>
+        <div class="dlg-body">
+          <div class="pair"><figure><img src="${f.dup.src}" alt=""><figcaption>Сейчас в альбоме</figcaption></figure><figure><img src="${f.dup.src}" alt="" style="filter:saturate(1.3) contrast(1.05)"><figcaption>Новый файл</figcaption></figure></div>
+          <div class="choice">
+            <button class="is-main" data-act="replace">Заменить<small>Фото останется на своём месте, с фокусом и сердечками клиентов</small></button>
+            <button data-act="copy">Загрузить копией<small>Будет два фото: старое и новое в конце</small></button>
+            <button data-act="skip">Пропустить<small>Этот файл не загружать</small></button>
+          </div>
+          ${left ? `<label class="chk"><input type="checkbox" id="rest"> Так же для остальных совпадений (ещё ${left})</label>` : ''}
+        </div>
+        <div class="dlg-foot"><button class="link" id="cancel">Отменить всю загрузку</button></div></div>`;
+      back.querySelector('#cancel').onclick = cancel;
+      back.querySelectorAll('.choice button').forEach(b => b.onclick = () => {
+        const all = back.querySelector('#rest')?.checked;
+        if (all) dups.slice(k).forEach(([, j]) => { acts[j] = b.dataset.act; }); else acts[i] = b.dataset.act;
+        k = all ? dups.length : k + 1; ask();
+      });
+    };
+    ask();
+  }
+  document.getElementById('go').onclick = () => (V === 'b' ? openB : openA)(picked());
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.querySelector('.dlg-back')) cancel(); });
+})();
+</script>
+</body>
+</html>

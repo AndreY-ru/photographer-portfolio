@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Блок наград — шесть вариантов</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Manrope:wght@500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #0c0c0d; color: #eae6dc; font: 500 14px 'Manrope', sans-serif; }
+  header { padding: 18px 28px 6px; }
+  h1 { margin: 0 0 4px; font: 600 1.9rem 'Cormorant Garamond', serif; }
+  p { margin: 0; color: #8f8a80; max-width: 1060px; line-height: 1.5; }
+  .pick { display: flex; gap: 10px; padding: 14px 28px; flex-wrap: wrap; }
+  .pick button { text-align: left; border: 1px solid rgba(234,230,220,.14); background: none; color: #8f8a80; border-radius: 12px;
+    padding: 10px 16px; cursor: pointer; font: inherit; max-width: 330px; }
+  .pick button strong { display: block; color: #eae6dc; font: 600 1.15rem 'Cormorant Garamond', serif; margin-bottom: 2px; }
+  .pick button[aria-pressed="true"] { border-color: #e6b322; background: rgba(230,179,34,.07); }
+  .row { display: flex; gap: 36px; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 4px 28px 24px; }
+  figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  figcaption { color: #8f8a80; }
+  .desk { --s: .55; width: calc(1440px * var(--s)); height: calc(900px * var(--s)); overflow: hidden; border-radius: 10px; box-shadow: 0 0 0 1px #2a2a2c; }
+  .desk iframe { width: 1440px; height: 900px; border: 0; transform: scale(var(--s)); transform-origin: 0 0; }
+  .phone { --s: .6; width: calc(390px * var(--s) + 16px); height: calc(844px * var(--s) + 16px); padding: 8px; border-radius: 36px; background: #000;
+    box-shadow: 0 0 0 2px #2a2a2c; overflow: hidden; }
+  .phone iframe { width: 390px; height: 844px; border: 0; border-radius: 30px; transform: scale(var(--s)); transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Блок «Признание &amp; Опыт» — шесть вариантов</h1>
+  <p>Во всех трёх: ссылка теперь — подписанная строка в тексте («Новость на techn.sstu.ru», «Пост ВКонтакте»), а нажатие на диплом открывает его крупно, на весь экран.
+     Окна живые: листай, нажимай на дипломы и ссылки. Два диплома настоящие, ещё два — примеры, чтобы было видно, как блок ведёт себя, когда наград больше.</p>
+</header>
+<div class="pick" id="pick">
+  <button data-v="aa"><strong>А — Сушилка</strong>Дипломы висят на прищепках на нити, как отпечатки в фотолаборатории; при наведении качаются. Лента листается вбок, на телефоне — пальцем.</button>
+  <button data-v="ab"><strong>Б — Хронология</strong>Годы крупно слева, тонкая линия с точками, справа миниатюра диплома. На телефоне — всё в одну колонку.</button>
+  <button data-v="ac"><strong>В — Стопка</strong>Дипломы лежат стопкой, сверху текущий, рядом текст и стрелки. На телефоне листается свайпом.</button>
+  <button data-v="ad"><strong>Г — Контактный лист</strong>Дипломы — кадры на плёнке с перфорацией и номерами «01A». Выбранный обведён жёлтым «восковым карандашом», как фотограф отмечает кадр.</button>
+  <button data-v="ae"><strong>Д — Выставка</strong>Дипломы в рамках с паспарту, как на стене галереи, рядом музейная этикетка: год, название, описание, ссылка.</button>
+  <button data-v="af"><strong>Е — Развороты</strong>Компактный список «год — название». Нажал — строка раскрывается: диплом, описание и ссылка. Удобно, когда наград станет много.</button>
+</div>
+<div class="row">
+  <figure><div class="desk"><iframe id="fd" title="На компьютере"></iframe></div><figcaption>На компьютере</figcaption></figure>
+  <figure><div class="phone"><iframe id="fp" title="На телефоне"></iframe></div><figcaption>На телефоне</figcaption></figure>
+</div>
+<script>
+  const pick = document.getElementById('pick');
+  const scrollTo = f => { try { const d = f.contentDocument; const s = d.querySelector('.about-awards'); if (s) f.contentWindow.scrollTo(0, s.getBoundingClientRect().top + f.contentWindow.scrollY - 30); } catch (e) {} };
+  const show = v => {
+    ['fd', 'fp'].forEach(id => { const f = document.getElementById(id); f.onload = () => setTimeout(() => scrollTo(f), 700); f.src = `/about?v=${v}`; });
+    pick.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  };
+  pick.addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(b.dataset.v); });
+  show('aa');
+</script>
+</body>
+</html>

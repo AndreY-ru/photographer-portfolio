@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{# Превью ссылки (Open Graph, см. base.html). Приватный альбом — без обложки и описания
+   (в превью уйдут только название и аватар фотографа) и закрыт от поисковиков. #}
+{% set og_title = album.title %}
+{% if album.is_private %}
+{% set og_description = 'Личный альбом' ~ (' · фотограф ' ~ site_owner.name ~ ' ' ~ site_owner.surname if site_owner else '') %}
+{% set og_noindex = true %}
+{% else %}
+{% set og_text = (album.card_caption or album.description or '')|replace('*', '')|replace('#', '')|replace('_', ' ')|striptags|trim %}
+{% set og_description = og_text|truncate(190, true, '…') if og_text else 'Фотоальбом' ~ (' · ' ~ site_owner.name ~ ' ' ~ site_owner.surname if site_owner else '') %}
+{% if album.cover_url or album.cover_thumb_url %}{% set og_image = album.cover_url or album.cover_thumb_url %}{% endif %}
+{% endif %}
+
+{% block title %}{{ album.title }} | {{ site_owner.name }} {{ site_owner.surname }}{% endblock %}
+{% block body_class %}album-page{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/album.css') }}">
+{% endblock %}
+
+{% block content %}
+    <!-- КНОПКА НАЗАД В ГАЛЕРЕЮ -->
+    <a href="{{ url_for('gallery') }}" class="back-to-gallery">← Назад в галерею</a>
+
+    <!-- ГЕРОЙ АЛЬБОМА (ОБЛОЖКА) -->
+    <header class="album-hero">
+        <div class="album-hero__bg">
+            <picture>
+                {% if album.cover_mobile_url %}
+                <!-- На узких экранах — готовый обрезанный 9:16 файл
+                     (cover_mobile_url), а не весь ландшафтный оригинал,
+                     как раньше через чистый CSS object-position. См.
+                     make_mobile_crop в __init__.py и редактор "Обложка для
+                     мобильной версии" в админке. -->
+                <source media="(max-width: 767px)" srcset="{{ media_url(album.cover_mobile_url) }}">
+                {% endif %}
+                <img src="{{ media_url(album.cover_url or album.cover_thumb_url) }}" alt="{{ album.title }}"
+                     style="--cover-focus-x: {{ album.cover_focus_x if album.cover_focus_x is not none else 50 }}%; --cover-focus-y: {{ album.cover_focus_y if album.cover_focus_y is not none else 50 }}%; --cover-zoom: {{ album.cover_zoom if album.cover_zoom is not none else 1.0 }};">
+            </picture>
+        </div>
+        <div class="album-hero__scrim"></div>
+        <h1 class="album-hero__title">{{ album.title }}</h1>
+        {% if album.description %}
+        <div class="album-hero__desc">{{ album.description | markdown }}</div>
+        {% endif %}
+        {% if album.date_taken %}
+        <div class="album-hero__date">{{ album.date_taken.strftime('%d.%m.%Y') }}</div>
+        {% endif %}
+        {% with days = album.days_left %}{% include "_expiry_rec.html" %}{% endwith %}
+        {% if photo_count %}<div class="album-hero__scroll">Листай вниз ↓</div>{% endif %}
+
+        <!-- Поделиться альбомом / скачать весь альбом одним архивом —
+             намеренно НЕ в общем .mobile-cta (тот фиксирован ко всему
+             экрану и живёт на любой странице), а именно в углу ОБЛОЖКИ:
+             уезжает вместе с ней при скролле. Низ шторки тут уже почти
+             полностью непрозрачный (rgba(8,8,8,1) у самого низа, см.
+             .album-hero__scrim), так что тёмная подложка кнопок не
+             нуждается в отдельной адаптации под светлое/тёмное фото —
+             в отличие от шапки наверху, где шторка нарочно слабая. -->
+        <div class="album-hero__utility">
+            <button type="button" class="album-hero__util-btn" id="album-share-btn" title="Поделиться альбомом">
+                <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+            </button>
+            {% if photo_count %}
+            <a class="album-hero__util-btn" id="album-download-btn" title="Скачать весь альбом"
+               href="{{ url_for('album_download_all', slug=album.slug) }}{{ '?token=' ~ request.args.get('token') if album.is_private else '' }}">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            </a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- СЕТКА ФОТОГРАФИЙ (Masonry Layout) -->
+    <main class="album-content">
+        <div class="masonry-gallery" id="album-grid"
+             data-album-id="{{ album.id }}"
+             data-album-slug="{{ album.slug }}"
+             data-allow-selection="{{ '1' if album.allow_selection else '0' }}"
+             data-require-client-info="{{ '1' if album.require_client_info else '0' }}">
+
+            {% for p in photos %}
+            {% if p.is_spacer %}
+            <!-- "Пустое место" из админки: невидимый блок нужной пропорции,
+                 чтобы расставлять фото в сетке свободно. Не .photo-card —
+                 в лайтбокс, лайки и скачивание не попадает. -->
+            <div class="photo-spacer {{ p.grid_class_slug or 'ratio-sq' }}" aria-hidden="true"></div>
+            {% else %}
+            <div class="photo-card {{ p.grid_class_slug or 'ratio-sq' }}"
+                 data-photo-id="{{ p.id }}"
+                 data-like-count="{{ p.like_count or 0 }}"
+                 data-highres="{{ media_url(p.display_url) }}"
+                 data-exif="{{ p.exif_json }}">
+                <img src="{{ media_url(p.display_thumb_url) }}" alt="{{ album.title }}" loading="lazy">
+                {% if album.allow_selection %}
+                <!-- Сколько человек отметили фото (без имён) — видно всегда, а не
+                     только при наведении. Выбрано владельцем по прототипу
+                     prototypes/album-extras, лайки «А». Обновляет album.js. -->
+                <span class="like-chip{{ ' is-mine' if p.is_liked else '' }}"{{ ' hidden' if not p.like_count else '' }}><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 00-7.7 0l-1.1 1-1.1-1a5.5 5.5 0 00-7.8 7.8l1 1 7.9 8 7.8-7.9 1-1a5.5 5.5 0 000-7.8z"/></svg><span class="like-count">{{ p.like_count or '' }}</span></span>
+                {% endif %}
+
+                <button class="expand-btn" title="На весь экран">
+                    <svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                </button>
+
+                <div class="photo-overlay">
+                    <div class="photo-actions">
+                        {% if album.allow_selection %}
+                        <button class="icon-btn like-btn {{ 'is-liked' if p.is_liked else '' }}"
+                                data-photo-id="{{ p.id }}" title="Сохранить в избранное" aria-pressed="{{ 'true' if p.is_liked else 'false' }}">
+                            <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 00-7.7 0l-1.1 1-1.1-1a5.5 5.5 0 00-7.8 7.8l1 1 7.9 8 7.8-7.9 1-1a5.5 5.5 0 000-7.8z"/></svg>
+                            <span class="like-count">{{ p.like_count or '' }}</span>
+                        </button>
+                        {% endif %}
+                        <a href="{{ media_url(p.display_url) }}" download class="icon-btn" title="Скачать">
+                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                        </a>
+                        <button class="icon-btn share-btn" title="Поделиться">
+                            <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <p class="album-empty">В этом альбоме пока нет фотографий.</p>
+            {% endfor %}
+        </div>
+    </main>
+
+    <!-- =========================================
+            ЛАЙТБОКС (ПРОСМОТРЩИК ФОТО)
+    ========================================= -->
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-backdrop"></div>
+
+        <div class="lightbox-top">
+            <div class="lb-counter" id="lb-counter">1 / {{ photo_count }}</div>
+            <div class="lb-actions">
+                {% if album.allow_selection %}
+                <button class="lb-btn" id="lb-like" title="Сохранить в избранное">
+                    <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 00-7.7 0l-1.1 1-1.1-1a5.5 5.5 0 00-7.8 7.8l1 1 7.9 8 7.8-7.9 1-1a5.5 5.5 0 000-7.8z"/></svg>
+                    <span class="like-count"></span>
+                </button>
+                {% endif %}
+                <button class="lb-btn" id="lb-info" title="Данные съёмки (EXIF)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </button>
+                <button class="lb-btn" id="lb-share" title="Поделиться">
+                    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+                </button>
+                <a href="#" download class="lb-btn" id="lb-download" title="Скачать оригинал">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                </a>
+                <button class="lb-btn" id="lb-fullscreen" title="Только фото, на весь экран">
+                    <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+                </button>
+                <button class="lb-btn" id="lb-close" title="Закрыть">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <button class="lb-nav prev" id="lb-prev">
+            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button class="lb-nav next" id="lb-next">
+            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+
+        <div class="lightbox-image-container" id="lb-img-container">
+            <img src="" alt="View" id="lb-image" oncontextmenu="return false;" draggable="false">
+        </div>
+
+        <div class="lightbox-bottom">
+            <div class="exif-pill hidden" id="lb-exif">
+                <p class="exif-caption" id="exif-caption"></p>
+                <div class="exif-row" id="exif-row">
+                    <span class="exif-item" data-field="camera" title="Камера"><svg class="exif-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span id="exif-camera"></span></span>
+                    <span class="exif-item" data-field="lens" title="Объектив"><svg class="exif-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></svg><span id="exif-lens"></span></span>
+                    <span class="exif-item" data-field="focal" title="Фокусное расстояние"><svg class="exif-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M3 9v6M21 9v6M8 11v2M12 10v4M16 11v2"/></svg><span id="exif-focal"></span></span>
+                    <span class="exif-item" data-field="speed" title="Выдержка"><svg class="exif-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7"/><path d="M12 13V9.5M10 3h4M18 6l1.5-1.5"/></svg><span id="exif-speed"></span></span>
+                    <span class="exif-item" data-field="aperture" title="Диафрагма"><svg class="exif-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.3 3.3L9 12M20.7 9.6H10.2M16.5 19.5L11 10.4M9.7 20.7L15 12M3.3 14.4h10.5M7.5 4.5l5.5 9.1"/></svg><span id="exif-aperture"></span></span>
+                    <span class="exif-item" data-field="iso" title="Светочувствительность"><svg class="exif-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg><span id="exif-iso"></span></span>
+                    <span class="exif-item" data-field="ev" title="Экспокоррекция"><svg class="exif-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h6M8 5v6M13 19L19 5M14 17h6"/></svg><span id="exif-ev"></span></span>
+                    <span class="exif-item" data-field="flash" title="Вспышка"><svg class="exif-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg><span id="exif-flash"></span></span>
+                </div>
+                <button class="exif-close" id="lb-exif-close" title="Скрыть инфо">✕</button>
+            </div>
+        </div>
+
+        <!-- Лента миниатюр всего альбома (собирает album.js). В режиме
+             «только фото» (кнопка полного экрана) прячется вместе с панелью. -->
+        <div class="lb-strip" id="lb-strip" aria-label="Все фото альбома"></div>
+    </div>
+
+    {# В приватном альбоме (клиент по ссылке получает свои фото) окна нет:
+       без него album.js пропускает скачивание сразу. Выбор владельца. #}
+    {% if photo_count and not album.is_private %}
+    <!-- ОКНО ПЕРЕД ПЕРВЫМ СКАЧИВАНИЕМ: условия использования фото.
+         Внешний вид — от модалки "Связаться" (.contact-modal в style.css,
+         на мобильной ширине — шторка снизу); .site-notice поднимает её
+         над лайтбоксом. Логика — album.js, секция "ОКНО ПЕРЕД СКАЧИВАНИЕМ". -->
+    <div class="contact-modal site-notice" id="download-notice" aria-hidden="true">
+        <div class="contact-modal__backdrop" data-notice-close></div>
+        <div class="contact-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="download-notice-title">
+            <span class="contact-modal__handle" aria-hidden="true"></span>
+            <div class="contact-modal__head">
+                <h2 class="contact-modal__title" id="download-notice-title">Перед скачиванием</h2>
+                <button type="button" class="contact-modal__close" data-notice-close aria-label="Закрыть">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            {% include "_usage_terms.html" %}
+            <button type="button" class="site-notice__btn" id="download-notice-ok">Понятно</button>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if album.allow_selection and album.require_client_info %}
+    <!-- ОКНО "КАК ВАС ЗОВУТ?" — открывается при первом лайке, если альбом
+         требует представиться (сервер отвечает 428). Имя — персональные
+         данные, поэтому чекбокс согласия обязателен (152-ФЗ) и ведёт на
+         ОТДЕЛЬНЫЙ документ согласия (/pd-consent, ч. 1 ст. 9); сервер тоже
+         проверяет pd_consent и pd_consent_version (api_client_select). Логика — album.js,
+         функция askClientName. -->
+    <div class="contact-modal site-notice" id="client-info-modal" aria-hidden="true">
+        <div class="contact-modal__backdrop" data-notice-close></div>
+        <div class="contact-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="client-info-title">
+            <span class="contact-modal__handle" aria-hidden="true"></span>
+            <div class="contact-modal__head">
+                <h2 class="contact-modal__title" id="client-info-title">Как вас зовут?</h2>
+                <button type="button" class="contact-modal__close" data-notice-close aria-label="Закрыть">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <p class="contact-modal__desc">Фотограф увидит, кто выбрал эти кадры.</p>
+            <!-- data-consent-version уходит на сервер вместе с именем и
+                 сохраняется в client_sessions.pd_consent_version — это та
+                 редакция согласия, по ссылке на которую человек согласился -->
+            <form class="client-info-form" id="client-info-form" data-consent-version="{{ PD_CONSENT_VERSION }}">
+                <input type="text" class="client-info-form__input" id="client-info-name"
+                       maxlength="64" autocomplete="name" placeholder="Имя" required>
+                <label class="pd-consent">
+                    <input type="checkbox" id="client-info-consent" required>
+                    <span>Я даю согласие на обработку персональных данных на условиях
+                        <a href="{{ url_for('pd_consent', version=PD_CONSENT_VERSION) }}" target="_blank" rel="noopener">Согласия на обработку персональных данных</a></span>
+                </label>
+                <button type="submit" class="site-notice__btn" id="client-info-submit" disabled>Продолжить</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{{ url_for('static', filename='js/masonry-layout.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/album.js') }}"></script>
+    <script>
+        // Отдельный, независимый от album.js скрипт — тот выходит из
+        // своего DOMContentLoaded сразу при отсутствии фото в альбоме
+        // (const cards = ...; if (cards.length === 0) return;), а кнопка
+        // "Поделиться" на обложке должна работать даже у пустого альбома.
+        document.addEventListener('DOMContentLoaded', () => {
+            const shareBtn = document.getElementById('album-share-btn');
+            if (!shareBtn) return;
+
+            function showAlbumToast(message) {
+                let toast = document.getElementById('album-toast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'album-toast';
+                    toast.className = 'album-toast';
+                    document.body.appendChild(toast);
+                }
+                toast.textContent = message;
+                toast.classList.add('is-visible');
+                clearTimeout(toast._hideTimer);
+                toast._hideTimer = setTimeout(() => toast.classList.remove('is-visible'), 2500);
+            }
+
+            shareBtn.addEventListener('click', () => {
+                const url = window.location.href;
+                if (navigator.share) {
+                    navigator.share({ title: document.title, url }).catch(() => {});
+                    return;
+                }
+                navigator.clipboard.writeText(url)
+                    .then(() => showAlbumToast('Ссылка на альбом скопирована'))
+                    .catch(() => showAlbumToast(url));
+            });
+
+            const downloadBtn = document.getElementById('album-download-btn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', () => {
+                    // Сборка zip на сервере может занять заметное время на
+                    // большом альбоме — сам браузерный download стартует
+                    // без предупреждения только когда всё уже готово,
+                    // поэтому короткий тост сразу по клику как обратная связь.
+                    showAlbumToast('Собираем архив, скачивание начнётся через несколько секунд…');
+                });
+            }
+        });
+    </script>
+{% endblock %}

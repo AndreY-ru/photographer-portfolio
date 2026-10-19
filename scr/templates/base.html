@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_owner.name }} {{ site_owner.surname }}{% endblock %}</title>
+
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='icons/favicon.svg') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
+
+    <!-- Превью ссылки в Telegram, ВК и мессенджерах (Open Graph). Страница может
+         задать в начале шаблона {% raw %}{% set og_title / og_description / og_image %}{% endraw %}
+         (путь как в БД, uploads/...) и og_noindex; без них — имя фотографа и аватар.
+         og:url — без ?token=, чтобы ссылка приватного альбома не попадала в превью. -->
+    {% set og_site = ((site_owner.name or '') ~ ' ' ~ (site_owner.surname or ''))|trim if site_owner else '' %}
+    {% set og_img = og_image if og_image is defined else (site_owner.avatar_url if site_owner else none) %}
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_RU">
+    {% if og_site %}<meta property="og:site_name" content="{{ og_site }}">{% endif %}
+    <meta property="og:title" content="{{ og_title if og_title is defined else (og_site or 'Фотограф') }}">
+    <meta property="og:description" content="{{ og_description if og_description is defined else ('Фотограф ' ~ og_site ~ ': портфолио, галерея и альбомы со съёмок' if og_site else 'Портфолио фотографа') }}">
+    <meta property="og:url" content="{{ abs_url(request.path) }}">
+    {% if og_img %}
+    <meta property="og:image" content="{{ abs_url(media_url(og_img)) }}">
+    <meta name="twitter:card" content="summary_large_image">
+    {% endif %}
+    {% if og_noindex is defined and og_noindex %}<meta name="robots" content="noindex, nofollow">{% endif %}
+
+    <!-- Применяем сохранённую тему ДО отрисовки, иначе при переходе со страницы,
+         где выбрана светлая/серая тема, на миг мелькнёт тёмная по умолчанию.
+         Тот же localStorage читает static/js/script.js — держи ключ 'grigorievVF'
+         в синхроне, если будешь его менять.
+
+         Заодно тем же приёмом (до отрисовки) сворачиваем карточку с данными
+         камеры (.vf-island), если пользователь её уже сворачивал раньше —
+         иначе она на долю секунды мелькнула бы развёрнутой, а потом script.js
+         её схлопнул. Разворачиваем по умолчанию только при самом первом
+         визите (когда в localStorage ещё ничего нет) — как и просили. -->
+    <script>
+        (function () {
+            try {
+                var s = JSON.parse(localStorage.getItem('grigorievVF') || '{}');
+                var themes = ['light', 'gray', 'dark'];
+                if (typeof s.aperture === 'number' && themes[s.aperture]) {
+                    document.documentElement.dataset.theme = themes[s.aperture];
+                }
+                if (s.islandOpen === false) {
+                    document.documentElement.classList.add('vf-island-precollapsed');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
+    <!-- Шрифты — свои копии (static/fonts), не Google Fonts: браузер посетителя
+         не обращается к серверам за границей (152-ФЗ) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/fonts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+    {% block preloader %}{% endblock %}
+
+    {% block bg_typography %}{% endblock %}
+
+    <!-- СЕТКА ВИДОИСКАТЕЛЯ. На главной странице к ней добавляется следящий
+         за курсором фокус-бокс (см. блок vf_focus в index.html) — на
+         остальных страницах это просто статичная рамка.
+
+         .vf-corners — 4 уголка по краям экрана, статичные, без слежения за
+         курсором (на тач-устройствах курсора попросту нет). На десктопе
+         скрыты (там своя, курсорная рамка), появляются только в мобильной
+         медиа-запросе (см. style.css) — сетку линий и курсорную рамку там
+         по-прежнему прячем целиком, а эти уголки остаются единственным
+         намёком на "видоискатель" на маленьком экране. -->
+    <div class="viewfinder-ui" id="vf-layer">
+        <div class="vf-grid-line vf-h-top"></div>
+        <div class="vf-grid-line vf-h-bottom"></div>
+        <div class="vf-grid-line vf-v-left"></div>
+        <div class="vf-grid-line vf-v-right"></div>
+        <div class="vf-corners" aria-hidden="true">
+            <span class="vf-corner vf-corner--tl"></span>
+            <span class="vf-corner vf-corner--tr"></span>
+            <span class="vf-corner vf-corner--bl"></span>
+            <span class="vf-corner vf-corner--br"></span>
+        </div>
+    </div>
+
+    <!-- Курсорная рамка главной (блок vf_focus в index.html) — НЕ внутри
+         .viewfinder-ui, а отдельным слоем: у .viewfinder-ui свой z-index
+         (10500), и всё внутри него оказывалось ПОД модалкой "Связаться"
+         (10650) — а системный курсор на главной скрыт, так что над модалкой
+         курсора не было вообще. Свой z-index рамки — в style.css. -->
+    {% block vf_focus %}{% endblock %}
+
+    <div class="grain-overlay"></div>
+    <div class="temp-overlay" id="temp-overlay" data-temp="5600"></div>
+
+    <div class="header-wrap">
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-block">
+                    <a href="{{ url_for('index') }}" class="logo">{{ site_owner.name }} {{ site_owner.surname }}</a>
+                    <!-- Подзаголовок под именем — заполняется только в
+                         дочернем шаблоне (сейчас только index.html, блок
+                         "logo_subtitle"). На остальных страницах он пустой,
+                         и .logo-subtitle просто не появляется в DOM — не
+                         нужно гасить его отдельным CSS-правилом. -->
+                    {% block logo_subtitle %}{% endblock %}
+                </div>
+
+                <!-- Шестерёнка: открывает/закрывает карточку с данными камеры -->
+                <button class="vf-toggle is-active" id="vf-toggle" type="button" aria-label="Данные камеры" aria-expanded="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
+            </div>
+            <nav class="nav">
+                <a href="{{ url_for('index') }}" class="nav__link {{ 'active' if request.endpoint == 'index' else '' }}">Главная</a>
+                <a href="{{ url_for('gallery') }}" class="nav__link {{ 'active' if request.endpoint in ('gallery', 'album_detail') else '' }}">Галерея</a>
+                <a href="{{ url_for('about') }}" class="nav__link {{ 'active' if request.endpoint == 'about' else '' }}">Обо мне</a>
+                <!-- Кнопки «Связаться» в шапке больше нет: на ПК её место — .cta-dock
+                     (ниже, у правого края), на телефоне — .mobile-cta в углу. -->
+            </nav>
+        </header>
+    </div>
+
+
+    <!-- Бургер — виден только на мобильной ширине (см. style.css), на
+         десктопе прежний .nav из трёх ссылок в шапке никуда не делся.
+         Специально СНАРУЖИ .header-wrap, той же причине, что и .vf-island
+         чуть ниже: у .header — свой контекст наложения (position:sticky +
+         z-index:20), и z-index кнопки ВНУТРИ него сравнивался бы только с
+         соседями по шапке, а не с .mobile-nav (она поверх всей страницы,
+         z-index которой куда выше). Кнопка должна оставаться кликабельной
+         поверх открытой панели меню (чтобы её же и закрыть) — иначе на
+         открытой панели SVG бы просто не был виден и недоступен для тапа. -->
+    <button class="burger" id="burger-toggle" type="button" aria-label="Меню" aria-expanded="false" aria-controls="mobile-nav">
+        <span class="burger__line"></span>
+        <span class="burger__line"></span>
+        <span class="burger__line"></span>
+    </button>
+
+    <!-- Клон шестерёнки для мобильной ширины — та же самая функция
+         (сворачивает/разворачивает карточку REC/ISO/F/Температура), что и
+         #vf-toggle внутри шапки, просто отдельной кнопкой рядом с бургером
+         и по той же причине СНАРУЖИ .header-wrap (см. коммент у бургера
+         выше). На десктопе скрыта — там работает обычная #vf-toggle в
+         .header-left. Обе кнопки слушает и держит в синхроне script.js. -->
+    <button class="vf-toggle vf-toggle-mobile is-active" id="vf-toggle-mobile" type="button" aria-label="Данные камеры" aria-expanded="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+
+    <!-- Полноэкранное меню для мобильной ширины — те же 3 ссылки, что и в
+         .nav выше, просто крупно и с плавным появлением на тёмном фоне
+         (открывается/закрывается бургером, см. script.js). Существует
+         отдельно от .nav (а не переиспользует её через CSS-трюки), чтобы
+         не переусложнять адаптацию: на десктопе просто не рендерится
+         видимой (display:none), на мобильном — .nav прячется, эта панель
+         занимает её место. -->
+    <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
+        <a href="{{ url_for('index') }}" class="mobile-nav__link {{ 'active' if request.endpoint == 'index' else '' }}">Главная</a>
+        <a href="{{ url_for('gallery') }}" class="mobile-nav__link {{ 'active' if request.endpoint in ('gallery', 'album_detail') else '' }}">Галерея</a>
+        <a href="{{ url_for('about') }}" class="mobile-nav__link {{ 'active' if request.endpoint == 'about' else '' }}">Обо мне</a>
+    </div>
+
+    <!-- Стеклянная карточка: REC / ISO / F / Температура. Специально СНАРУЖИ
+         .header-wrap (а не внутри) — иначе на секунду анимации появления
+         шапки (у .header-wrap есть свой transform) карточка привязалась бы
+         к нему, а не к вьюпорту, и position:fixed поехал бы криво. Заодно
+         не заперта в контексте наложения .header (z-index:20), поэтому
+         спокойно поднимается по z-index выше обложек и контента страниц
+         (см. комментарий у .vf-island в style.css) -->
+    <div class="vf-island" id="vf-island">
+        <div class="vf-island__pill">
+            <span class="vf-island__item vf-island__rec">REC <span id="clock">00:00:00</span></span>
+            <span class="vf-island__divider"></span>
+            <button class="vf-island__item vf-dial" id="meta-iso" type="button">
+                <svg class="vf-island__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span class="vf-island__value">ISO 100</span>
+            </button>
+            <span class="vf-island__divider"></span>
+            <button class="vf-island__item vf-dial" id="meta-aperture" type="button">
+                <svg class="vf-island__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="14.31" y1="8" x2="20.05" y2="17.94"/><line x1="9.69" y1="8" x2="21.17" y2="8"/><line x1="7.38" y1="12" x2="13.12" y2="2.06"/><line x1="9.69" y1="16" x2="3.95" y2="6.06"/><line x1="14.31" y1="16" x2="2.83" y2="16"/><line x1="16.62" y1="12" x2="10.88" y2="21.94"/></svg>
+                <span class="vf-island__value">F/16</span>
+            </button>
+            <span class="vf-island__divider"></span>
+            <button class="vf-island__item vf-dial" id="meta-temp" type="button">
+                <svg class="vf-island__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <span class="vf-island__value">5600K</span>
+            </button>
+            <span class="vf-island__divider"></span>
+            <button class="vf-island__collapse" id="vf-island-collapse" type="button" aria-label="Свернуть">
+                <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+        </div>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <!-- ПОДВАЛ «Волчий след» (выбран владельцем по прототипу, prototypes/site-footer,
+         вариант Н). Всё по центру: волчица-печать, имя, соцсети, правовые ссылки.
+         По слою .footer-trail ходят следы лапок (script.js, «ПОДВАЛ: ВОЛЧИЙ СЛЕД»):
+         при появлении бегут к колосу (всегда слева, чтобы не закрывать имя), он
+         загорается; нажатие на него переключает «следы за курсором» (с надписью)
+         ↔ «гуляет по фону» ↔ снова к колосу. -->
+    <footer class="footer">
+        <div class="footer-trail" aria-hidden="true"></div>
+        <div class="footer-content">
+            <!-- Колос (выбран владельцем по прототипу prototypes/footer-wolf, «Б»): Хоро —
+                 волчица урожая из пшеницы. Стоит слева от имени, как монограмма;
+                 надпись «Великая волчица наблюдает» — под всей строкой. -->
+            <div class="footer-sign">
+                <div class="wisewolf-seal" role="button" tabindex="0" title="Нажми на колос">
+                    <svg class="holo-icon" viewBox="0 0 100 100" width="46" height="46" aria-hidden="true">
+                        <path class="wheat-stem" d="M50 96 C50 72 52 46 58 12"/>
+                        <g class="wheat-grains">
+                            <ellipse cx="44.5" cy="76" rx="5" ry="9" transform="rotate(-28 44.5 76)"/>
+                            <ellipse cx="56.5" cy="76" rx="5" ry="9" transform="rotate(28 56.5 76)"/>
+                            <ellipse cx="45.7" cy="64" rx="4.8" ry="8.6" transform="rotate(-28 45.7 64)"/>
+                            <ellipse cx="57.7" cy="64" rx="4.8" ry="8.6" transform="rotate(28 57.7 64)"/>
+                            <ellipse cx="46.9" cy="52" rx="4.4" ry="8" transform="rotate(-28 46.9 52)"/>
+                            <ellipse cx="58.9" cy="52" rx="4.4" ry="8" transform="rotate(28 58.9 52)"/>
+                            <ellipse cx="48.1" cy="40" rx="4" ry="7.2" transform="rotate(-28 48.1 40)"/>
+                            <ellipse cx="60.1" cy="40" rx="4" ry="7.2" transform="rotate(28 60.1 40)"/>
+                            <ellipse cx="49.3" cy="29" rx="3.6" ry="6.4" transform="rotate(-28 49.3 29)"/>
+                            <ellipse cx="61.3" cy="29" rx="3.6" ry="6.4" transform="rotate(28 61.3 29)"/>
+                            <ellipse cx="50.5" cy="19" rx="3.2" ry="5.6" transform="rotate(-28 50.5 19)"/>
+                            <ellipse cx="62.5" cy="19" rx="3.2" ry="5.6" transform="rotate(28 62.5 19)"/>
+                            <ellipse cx="58.5" cy="11" rx="3" ry="6"/>
+                        </g>
+                        <path class="wheat-awns" d="M41.5 69l-7 -12M59.5 69l7 -12M42.7 57l-7 -12M60.7 57l7 -12M43.9 45l-7 -12M61.9 45l7 -12M45.1 33l-7 -12M63.1 33l7 -12M46.3 22l-7 -12M64.3 22l7 -12M47.5 12l-7 -12M65.5 12l7 -12M58.5 5v-5"/>
+                    </svg>
+                </div>
+                <a href="{{ url_for('index') }}" class="footer-name">{{ site_owner.name }} {{ site_owner.surname }}</a>
+            </div>
+            <span class="wisewolf-text">Великая волчица наблюдает</span>
+            {% if site_socials %}
+            <div class="footer-socials">
+                {% for s in site_socials %}
+                <a href="{{ s.link }}" class="footer-social" target="_blank" rel="noopener" aria-label="{{ s.title }}">
+                    <span class="footer-social__icon" style="--icon-url: url('{{ media_url(s.icon) }}');"></span>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <nav class="footer-legal" aria-label="Правовая информация">
+                <a href="{{ url_for('privacy') }}" title="Политика обработки персональных данных">Персональные данные</a>
+                <a href="{{ url_for('pd_consent') }}" title="Согласие на обработку персональных данных">Согласие на обработку ПД</a>
+                <a href="{{ url_for('cookies_policy') }}" title="Политика cookies">Cookies</a>
+                <a href="{{ url_for('about') }}#usage" title="Использование фотографий">Использование фото</a>
+            </nav>
+            <p class="copyright">© {{ current_year }} · Все фотографии защищены авторским правом</p>
+        </div>
+    </footer>
+
+    <!-- COOKIE-БАННЕР. Скрыт по умолчанию (hidden) — script.js показывает
+         его, если человек ещё не нажимал "Продолжить" (ключ
+         grigorievCookieOk в localStorage). Стили — style.css, "COOKIE-БАННЕР".
+         Должен стоять в <body> ПОСЛЕ .mobile-nav: на мобильной ширине он
+         прячется при открытом меню через .mobile-nav.is-open ~ .cookie-banner. -->
+    <div class="cookie-banner" id="cookie-banner" role="region" aria-label="Уведомление о cookies" hidden>
+        <p class="cookie-banner__text">
+            На сайте осуществляется обработка пользовательских данных с использованием cookies в соответствии
+            с <a href="{{ url_for('privacy') }}">Политикой обработки персональных данных</a>
+            и <a href="{{ url_for('cookies_policy') }}">Политикой cookies</a>.
+        </p>
+        <button type="button" class="cookie-banner__btn" id="cookie-banner-ok">Продолжить</button>
+    </div>
+
+    {% if site_socials or (site_owner and site_owner.phone) %}
+    <!-- Фиксированная кнопка связи — только на мобильной ширине (см.
+         style.css). Открывает модалку .contact-modal (см. ниже); href
+         остаётся рабочей ссылкой-фолбэком на случай, если JS не выполнится. -->
+    <a href="{{ url_for('about') }}#contact" class="mobile-cta" data-contact-trigger>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Связаться
+    </a>
+
+    {% if site_socials or (site_owner and site_owner.phone) %}
+    <!-- «Связаться» на ПК (на телефоне скрыта — там .mobile-cta): язычок с лапкой
+         у правого края, нажатие выдвигает шторку с контактами — открывается
+         ОТТУДА, где нажал, а не окном по центру. Логика — script.js,
+         «КНОПКА СВЯЗАТЬСЯ НА ПК». -->
+    <div class="cta-dock" id="cta-dock">
+        <div class="cta-dock__panel" id="cta-dock-panel">
+            <p class="cta-dock__title">Напиши мне</p>
+            <p class="cta-dock__sub">Обсудим дату и идею съёмки</p>
+            {% for s in site_socials %}
+            <a href="{{ s.link }}" class="cta-dock__row" target="_blank" rel="noopener">
+                <span class="cta-dock__icon" style="--icon-url: url('{{ media_url(s.icon) }}');"></span>
+                <span class="cta-dock__text"><b>{{ s.title }}</b><small>{{ s.link | link_handle }}</small></span>
+            </a>
+            {% endfor %}
+            {% if site_owner and site_owner.phone %}
+            <a href="tel:{{ site_owner.phone }}" class="cta-dock__row" data-copy-phone="{{ site_owner.phone | phone_pretty }}">
+                <span class="cta-dock__icon" style="--icon-url: url('{{ url_for('static', filename='icons/phone.svg') }}');"></span>
+                <span class="cta-dock__text"><b>Телефон</b><small data-copy-label>{{ site_owner.phone | phone_pretty }}</small></span>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('about') }}#contact" class="cta-dock__more">Все способы связи →</a>
+        </div>
+        <button type="button" class="cta-dock__toggle" aria-expanded="false" aria-controls="cta-dock-panel">
+            <svg class="cta-dock__paw" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 21c-6 0-11 6-11 10.5 0 3 2.6 4.5 5.5 4.5 2.4 0 3.6-1.4 5.5-1.4s3.1 1.4 5.5 1.4c2.9 0 5.5-1.5 5.5-4.5C31 27 26 21 20 21z"/><ellipse cx="7.5" cy="17" rx="3.4" ry="4.4" transform="rotate(-25 7.5 17)"/><ellipse cx="15" cy="9.5" rx="3.4" ry="4.6" transform="rotate(-8 15 9.5)"/><ellipse cx="25" cy="9.5" rx="3.4" ry="4.6" transform="rotate(8 25 9.5)"/><ellipse cx="32.5" cy="17" rx="3.4" ry="4.4" transform="rotate(25 32.5 17)"/></svg>
+            <span>Связаться</span>
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Модалка "Связаться" — общая для всех кнопок с [data-contact-trigger]
+         (сейчас это плавающая .mobile-cta на мобильной ширине; на ПК у кнопки
+         «Связаться» своя панель — .cta-dock выше). Быстрые каналы — соцсети (site_socials, та же таблица, что
+         и на "Обо мне") и телефон; "Другие способы связи" ведёт в полный
+         блок контактов на странице "Обо мне" (about.html#contact).
+         Открытие/закрытие — script.js, секция "МОДАЛКА СВЯЗАТЬСЯ". -->
+    <div class="contact-modal" id="contact-modal" aria-hidden="true">
+        <div class="contact-modal__backdrop" data-contact-close></div>
+        <div class="contact-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
+            <span class="contact-modal__handle" aria-hidden="true"></span>
+            <div class="contact-modal__head">
+                <h2 class="contact-modal__title" id="contact-modal-title">Связаться</h2>
+                <button type="button" class="contact-modal__close" data-contact-close aria-label="Закрыть">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <p class="contact-modal__desc">Буду рад обсудить сотрудничество, проекты или задать вопросы.</p>
+
+            <div class="contact-modal__list">
+                {% for s in site_socials %}
+                <a href="{{ s.link }}" class="contact-modal__item" target="_blank" rel="noopener">
+                    <span class="contact-modal__icon">
+                        <!-- Картинка идёт прямо из БД (icon_social_media.icon,
+                             тот же media_url(s.icon), что и раньше) — какой файл
+                             админка отдаёт для этой соцсети, тот и покажется,
+                             без угадывания платформы по названию файла. Красится
+                             через CSS-маску (см. .contact-modal__icon-glyph в
+                             style.css) — так адаптируется под тему и SVG, и PNG,
+                             какого бы цвета ни был залит сам файл. -->
+                        <span class="contact-modal__icon-glyph" style="--icon-url: url('{{ media_url(s.icon) }}');"></span>
+                    </span>
+                    <span class="contact-modal__text">
+                        <span class="contact-modal__name">{{ s.title }}</span>
+                        <span class="contact-modal__hint">
+                            {%- set icon_lower = (s.icon or '')|lower -%}
+                            {%- if 'vk' in icon_lower -%}
+                                Написать в личные сообщения
+                            {%- elif 'telegram' in icon_lower or 'tg' in icon_lower -%}
+                                Написать в канал или личку
+                            {%- elif 'whatsapp' in icon_lower -%}
+                                Написать в WhatsApp
+                            {%- elif 'youtube' in icon_lower -%}
+                                Смотреть канал
+                            {%- else -%}
+                                Написать или перейти
+                            {%- endif -%}
+                        </span>
+                    </span>
+                    <svg class="contact-modal__chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                </a>
+                {% endfor %}
+
+                {% if site_owner and site_owner.phone %}
+                <!-- data-copy-phone: на ПК (мышь) клик копирует номер в буфер
+                     вместо tel: — звонить с компьютера нечем. На телефоне
+                     работает обычный tel:. См. script.js, "КОПИРОВАНИЕ ТЕЛЕФОНА". -->
+                <a href="tel:{{ site_owner.phone }}" class="contact-modal__item" data-copy-phone="{{ site_owner.phone | phone_pretty }}">
+                    <span class="contact-modal__icon contact-modal__icon--phone">
+                        <!-- Телефон не хранится в БД как "соцсеть", поэтому путь
+                             фиксированный (в отличие от иконок выше), а не из
+                             s.icon — но рисуется тем же способом (маска), чтобы
+                             все иконки в модалке были одной техникой/стилем. -->
+                        <span class="contact-modal__icon-glyph" style="--icon-url: url('{{ url_for('static', filename='icons/phone.svg') }}');"></span>
+                    </span>
+                    <span class="contact-modal__text">
+                        <span class="contact-modal__name">Телефон</span>
+                        <span class="contact-modal__hint" data-copy-label>{{ site_owner.phone | phone_pretty }}</span>
+                    </span>
+                    <svg class="contact-modal__chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Ведёт на полный блок контактов на "Обо мне" — по клику модалка
+                 закрывается (см. script.js), а обычная навигация по ссылке
+                 доводит до .about-contact#contact. -->
+            <a href="{{ url_for('about') }}#contact" class="contact-modal__more">
+                <span class="contact-modal__icon contact-modal__icon--plus">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </span>
+                <span class="contact-modal__name">Другие способы связи</span>
+                <svg class="contact-modal__chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Библиотека ColorThief для Хамелеона (подстройка акцентного цвета под фото);
+         своя копия в static/js/vendor (MIT), не с cdnjs — по той же причине, что и шрифты -->
+    <script src="{{ url_for('static', filename='js/vendor/color-thief.umd.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

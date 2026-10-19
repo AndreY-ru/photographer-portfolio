@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{# Страница ошибки 404 / 500 с шапкой и подвалом (page_not_found / server_error в __init__.py).
+   Если сломалась сама база, вместо неё отдаётся error_static.html. #}
+{% set og_title = 'Страница не найдена' if code == 404 else 'Ошибка на сайте' %}
+{% set og_noindex = true %}
+
+{% block title %}{{ og_title }}{% if site_owner %} | {{ site_owner.name }} {{ site_owner.surname }}{% endif %}{% endblock %}
+{% block body_class %}fade-in{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/error.css') }}">
+{% endblock %}
+
+{% block content %}
+    {% include "_error_body.html" %}
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{#
+   Политика cookies. Роут /cookies. Таблица ниже перечисляет ВСЁ, что
+   сайт реально хранит в браузере посетителя (cookies + localStorage/
+   sessionStorage). Добавляете новую куку/ключ в JS или __init__.py —
+   дописывайте строку сюда. Подключите когда-нибудь Яндекс Метрику или
+   другую аналитику — это уже необязательные cookies: нужно будет
+   переписать раздел 3 и дать в баннере выбор "принять/отказаться".
+#}
+{% set operator_name = (site_owner.surname ~ ' ' ~ site_owner.name ~ (' ' ~ site_owner.middle_name if site_owner.middle_name else '')) if site_owner else '' %}
+
+{% block title %}Политика cookies{% if site_owner %} | {{ site_owner.name }} {{ site_owner.surname }}{% endif %}{% endblock %}
+{% block body_class %}fade-in{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+{% endblock %}
+
+{% block content %}
+    <main class="legal-page">
+        <p class="legal-eyebrow">Правовая информация</p>
+        <h1 class="legal-title">Политика cookies</h1>
+        <p class="legal-meta">Редакция от 09.10.2026</p>
+
+        <p>
+            Эта политика объясняет, какие cookies и похожие технологии использует сайт
+            <strong>{{ request.host }}</strong> и зачем. Она дополняет
+            <a href="{{ url_for('privacy') }}">Политику обработки персональных данных</a>.
+            Оператор — <strong>{{ operator_name or '[ЗАПОЛНИТЬ: ФИО]' }}</strong>.
+        </p>
+
+        <h2>1. Что такое cookies</h2>
+        <p>
+            Cookies — небольшие текстовые записи, которые сайт сохраняет в вашем браузере, чтобы узнать
+            его при следующем запросе. Похожим образом работает локальное хранилище браузера
+            (localStorage и sessionStorage): данные в нём остаются на вашем устройстве и сами на сервер
+            не отправляются. Ни то, ни другое не вредит устройству.
+        </p>
+
+        <h2>2. Что использует этот сайт</h2>
+        <p>Только то, что нужно для работы самого сайта:</p>
+        <div class="legal-table-wrap">
+            <table class="legal-table">
+                <thead>
+                    <tr><th>Название</th><th>Для чего</th><th>Срок хранения</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>cs_&lt;номер альбома&gt;</code><br>cookie</td>
+                        <td>Запоминает, какие фото вы отметили в альбоме с выбором фото. Содержит только случайный идентификатор. Появляется, только если вы отметили хотя бы одно фото.</td>
+                        <td>180 дней</td>
+                    </tr>
+                    <tr>
+                        <td><code>session</code><br>cookie</td>
+                        <td>Вход в панель управления сайтом. Устанавливается только администратору сайта, обычным посетителям — нет.</td>
+                        <td>До закрытия браузера</td>
+                    </tr>
+                    <tr>
+                        <td><code>adminTheme</code><br>localStorage</td>
+                        <td>Тема панели управления (тёмная или светлая). Только у администратора сайта.</td>
+                        <td>Пока вы не очистите данные браузера</td>
+                    </tr>
+                    <tr>
+                        <td><code>grigorievVF</code><br>localStorage</td>
+                        <td>Ваши настройки отображения: тема оформления и панель с данными камеры.</td>
+                        <td>Пока вы не очистите данные браузера</td>
+                    </tr>
+                    <tr>
+                        <td><code>grigorievCookieOk</code><br>localStorage</td>
+                        <td>Что вы нажали «Продолжить» в уведомлении о cookies, чтобы не показывать его снова.</td>
+                        <td>Пока вы не очистите данные браузера</td>
+                    </tr>
+                    <tr>
+                        <td><code>dlNotice_&lt;номер альбома&gt;</code><br>localStorage</td>
+                        <td>Что вы ознакомились с условиями использования фотографий перед скачиванием из этого альбома.</td>
+                        <td>Пока вы не очистите данные браузера</td>
+                    </tr>
+                    <tr>
+                        <td><code>grigorievPreloaderSeen</code><br>sessionStorage</td>
+                        <td>Чтобы заставка на главной не показывалась повторно при переходах по сайту.</td>
+                        <td>До закрытия вкладки</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>3. Чего на сайте нет</h2>
+        <p>
+            Сайт не использует аналитические, рекламные и профилирующие cookies: здесь нет счётчиков
+            посещаемости, рекламных сетей и сторонних трекеров. Сохраняется только то, что описано выше
+            и в <a href="{{ url_for('privacy') }}">Политике обработки персональных данных</a> (например,
+            выбор фотографий в альбоме и технические журналы сервера).
+        </p>
+
+        <h2>4. Сторонние сервисы</h2>
+        <p>
+            Сайт не подключает сторонние сервисы: шрифты, скрипты и другие файлы оформления
+            загружаются только с собственного сервера сайта, поэтому при просмотре страниц ваш
+            браузер не обращается к чужим серверам и они не устанавливают cookies. Ссылки на
+            соцсети ведут на сторонние сайты — там действуют их собственные правила.
+        </p>
+
+        <h2>5. Как отключить или удалить cookies</h2>
+        <p>
+            Вы можете запретить cookies или удалить уже сохранённые в настройках браузера. Сайт при этом
+            продолжит работать, но не сможет запомнить ваш выбор фото в альбоме, а уведомление о cookies
+            будет появляться снова. Инструкции для популярных браузеров:
+        </p>
+        <ul>
+            <li><a href="https://support.google.com/chrome/answer/95647?hl=ru" target="_blank" rel="noopener">Google Chrome</a></li>
+            <li><a href="https://yandex.ru/support/browser/personal-data-protection/cookies.html" target="_blank" rel="noopener">Яндекс Браузер</a></li>
+            <li><a href="https://support.mozilla.org/ru/kb/udalenie-kuk-i-dannyh-sajtov-v-firefox" target="_blank" rel="noopener">Mozilla Firefox</a></li>
+            <li><a href="https://support.apple.com/ru-ru/guide/safari/sfri11471/mac" target="_blank" rel="noopener">Safari</a></li>
+        </ul>
+
+        <h2>6. Вопросы</h2>
+        <p>
+            Если что-то непонятно, напишите на
+            {% if site_owner and site_owner.email %}<a href="mailto:{{ site_owner.email }}">{{ site_owner.email }}</a>{% else %}<mark class="legal-todo">[ЗАПОЛНИТЬ: email]</mark>{% endif %}.
+        </p>
+    </main>
+{% endblock %}

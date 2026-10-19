@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Вход в админку</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='icons/favicon.svg') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
+    <!-- Шрифты — свои копии (static/fonts), не Google Fonts: браузер посетителя
+         не обращается к серверам за границей (152-ФЗ) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/fonts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <!-- Та же тема, что выбрана в админке -->
+    <script>try { if (localStorage.getItem('adminTheme') === 'light') document.documentElement.dataset.theme = 'light'; } catch (e) {}</script>
+    <style>
+        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .login-box { width: 100%; max-width: 360px; padding: 30px; }
+        .login-box h1 { margin: 0 0 20px; font-family: var(--font-heading); font-weight: 600; font-size: 2rem; text-align: center; }
+        .login-box .form-group input { width: 100%; }
+    </style>
+</head>
+<body class="admin-body">
+    <div class="login-box editor-panel">
+        <h1>Вход в админ-панель</h1>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="flash-error">{{ msg }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('admin_login') }}">
+            <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" name="login" required autofocus autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-primary w-100">Войти</button>
+        </form>
+    </div>
+
+<script>
+    document.querySelectorAll('input[type="password"]').forEach(input => {
+        const wrap = document.createElement('div');
+        wrap.className = 'password-field-wrap';
+        input.parentNode.insertBefore(wrap, input);
+        wrap.appendChild(input);
+        // Те же иконки глаза, что в admin.js
+        const EYE_OPEN = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+        const EYE_CLOSED = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'password-toggle-btn';
+        btn.innerHTML = EYE_OPEN;
+        btn.setAttribute('aria-label', 'Показать пароль');
+        wrap.appendChild(btn);
+        btn.addEventListener('click', () => {
+            const hidden = input.type === 'password';
+            input.type = hidden ? 'text' : 'password';
+            btn.innerHTML = hidden ? EYE_CLOSED : EYE_OPEN;
+            btn.setAttribute('aria-label', hidden ? 'Скрыть пароль' : 'Показать пароль');
+        });
+    });
+</script>
+</body>
+</html>

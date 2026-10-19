@@ -1,0 +1,63 @@
+/* ПРОТОТИП: срок до удаления и лайки других */
+.ex-exp svg, .ex-like-chip svg, .ex-like-heart svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ===== СРОК: А — таблетка ===== */
+.ex-exp-a .ex-exp { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px;
+  background: rgba(10,10,10,.62); border: 1px solid rgba(255,255,255,.16); color: #eae6dc;
+  font: 600 .7rem var(--font-ui); letter-spacing: .06em; white-space: nowrap; }
+.ex-exp-a .ex-exp svg { width: 13px; height: 13px; }
+.ex-exp-a .ex-exp.is-soon { color: #f0c24a; border-color: rgba(240,194,74,.5); }
+.ex-exp-a .ex-exp.is-last { color: #ff7a6b; border-color: rgba(255,122,107,.55); }
+.ex-exp-a .ex-exp--card { position: absolute; z-index: 3; top: 30px; right: 30px; }
+.ex-exp-a .ex-exp--hero { position: relative; z-index: 10; margin-top: 14px; }
+
+/* ===== СРОК: Б — таймер, как REC в видоискателе ===== */
+.ex-exp-b .ex-exp { display: inline-flex; align-items: baseline; gap: 7px; font: 600 .66rem var(--font-ui); letter-spacing: .16em;
+  text-transform: uppercase; color: rgba(255,255,255,.75); text-shadow: 0 1px 6px rgba(0,0,0,.7); white-space: nowrap; }
+.ex-exp-b .ex-exp b { color: #e6b322; font-size: .8rem; }
+.ex-exp-b .ex-exp .ex-num { font-size: .95rem; color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .06em; }
+.ex-exp-b .ex-exp.is-soon b, .ex-exp-b .ex-exp.is-last b { color: #ff5a4a; animation: ex-blink 1.4s steps(1) infinite; }
+.ex-exp-b .ex-exp.is-last .ex-num { color: #ff7a6b; }
+@keyframes ex-blink { 50% { opacity: .15; } }
+.ex-exp-b .ex-exp--card { position: absolute; z-index: 3; top: 36px; right: 30px; }
+.ex-exp-b .ex-exp--hero { position: relative; z-index: 10; margin-top: 14px; }
+
+/* ===== СРОК: В — плёнка заканчивается (полоска оставшегося срока) ===== */
+.ex-exp-c .ex-exp { display: flex; flex-direction: column; gap: 6px; }
+.ex-exp-c .ex-cap { font: 500 .7rem var(--font-ui); letter-spacing: .04em; color: rgba(255,255,255,.75); }
+.ex-exp-c .ex-bar { display: block; height: 2px; background: rgba(255,255,255,.15); border-radius: 2px; overflow: hidden; }
+.ex-exp-c .ex-bar i { display: block; height: 100%; background: #e6b322; }
+.ex-exp-c .ex-exp.is-soon .ex-bar i { background: #f0a43a; }
+.ex-exp-c .ex-exp.is-last .ex-bar i { background: #ff5a4a; }
+.ex-exp-c .ex-exp.is-last .ex-cap { color: #ff9b8f; }
+.ex-exp-c .ex-exp--card { position: absolute; z-index: 3; left: 30px; right: 30px; top: 66px; }
+.ex-exp-c .ex-exp--hero { position: absolute; z-index: 10; left: 50%; bottom: 90px; width: min(360px, 80vw); transform: translateX(-50%); text-align: center; }
+
+/* ===== ЛАЙКИ: А — цифра у сердечка + метка в углу ===== */
+.ex-like-a .like-btn { display: inline-flex !important; align-items: center; gap: 4px; }
+.ex-like-num { font: 600 .82rem var(--font-ui); font-variant-numeric: tabular-nums; }
+.ex-like-chip { position: absolute; z-index: 2; left: 10px; top: 10px; display: none; align-items: center; gap: 4px; padding: 3px 8px 3px 6px;
+  border-radius: 999px; background: rgba(10,10,10,.6); color: #eae6dc; font: 600 .7rem var(--font-ui); pointer-events: none; }
+.ex-like-chip svg { width: 12px; height: 12px; }
+.ex-like-chip.is-mine { color: #e6b322; }
+.ex-like-chip.is-mine svg { fill: #e6b322; }
+.ex-like-a .photo-card.ex-has-likes .ex-like-chip { display: inline-flex; }
+.ex-like-a .photo-card:hover .ex-like-chip { opacity: 0; transition: opacity .2s; }
+
+/* ===== ЛАЙКИ: Б — сердечко с числом в углу, всегда ===== */
+.ex-like-heart { position: absolute; z-index: 2; right: 10px; bottom: 10px; display: none; width: 34px; height: 34px; pointer-events: none; color: #fff; }
+.ex-like-heart svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: rgba(10,10,10,.55); stroke: rgba(255,255,255,.8); stroke-width: 1.4; }
+.ex-like-heart span { position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: 2px; font: 700 .72rem var(--font-ui); }
+.ex-like-heart.is-mine svg { fill: #e6b322; stroke: #e6b322; }
+.ex-like-heart.is-mine span { color: #141210; }
+.ex-like-b .photo-card.ex-has-likes .ex-like-heart { display: block; }
+.ex-like-b .photo-card:hover .ex-like-heart { opacity: 0; transition: opacity .2s; }
+
+/* ===== ЛАЙКИ: В — пометка карандашом, как на контактном листе ===== */
+.ex-like-mark { position: absolute; z-index: 2; left: 12px; bottom: 10px; display: none; width: 66px; height: 48px; pointer-events: none; }
+.ex-ring { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #e6b322; stroke-width: 2.4; stroke-linecap: round; opacity: .9;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+.ex-like-mark span { position: absolute; inset: 0; display: grid; place-items: center; font: italic 600 1.55rem var(--font-heading); color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+.ex-like-mark.is-mine .ex-ring { stroke-width: 3.2; }
+.ex-like-c .photo-card.ex-has-likes .ex-like-mark { display: block; }

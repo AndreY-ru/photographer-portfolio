@@ -1,0 +1,8 @@
+Flask
+PyMySQL
+Werkzeug
+Pillow
+Unidecode
+APScheduler
+Markdown
+python-dotenv

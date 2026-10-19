@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{# Превью ссылки: фото первого направления (см. base.html) #}
+{% if directions and directions[0].file_url %}{% set og_image = directions[0].file_url %}{% endif %}
+
+{% block title %}{{ site_owner.name }} {{ site_owner.surname }} | Главная{% endblock %}
+{% block body_class %}fade-in home-page{% endblock %}
+
+{% block logo_subtitle %}<span class="logo-subtitle">Фотограф</span>{% endblock %}
+
+{% block preloader %}
+    <!-- ПРЕЛОАДЕР: типографический морфинг. Вертикальная надпись проявляется
+        из темноты, потом смазывается движением — и в этот же момент
+        рождается vf-v-left (сетка видоискателя стоит z-index'ом выше
+        прелоадера, см. style.css, поэтому рисуется прямо на его фоне). -->
+    <div class="preloader" id="preloader">
+        <div class="preloader-type" id="preloader-type">
+            <span class="preloader-type__text">Сквозь объектив</span>
+        </div>
+    </div>
+{% endblock %}
+
+{% block bg_typography %}
+    <!-- ФОНОВЫЙ МАНИФЕСТ -->
+    <div class="bg-typography">VISION</div>
+{% endblock %}
+
+{% block vf_focus %}
+        <div class="vf-focus-group" id="vf-focus">
+            <div class="bracket top-left"></div>
+            <div class="bracket top-right"></div>
+            <div class="bracket bottom-left"></div>
+            <div class="bracket bottom-right"></div>
+            <div class="center-dot"></div>
+        </div>
+{% endblock %}
+
+{% block content %}
+    <!-- ГЕРОЙ + МЕНЮ КАТЕГОРИЙ -->
+    <main class="showcase-page">
+
+        <!-- ГЕРОЙ: фото на всю ширину, подпись поверх снизу. На десктопе
+             категория переключается кликом по пункту меню справа (ниже);
+             на мобильной ширине — свайпом влево/вправо прямо по фото (см.
+             touch-action: pan-y и обработчики touchstart/move/end в
+             script.js — вертикальный скролл страницы при этом не трогаем,
+             перехватываем только явно горизонтальный жест). И то, и
+             другое переключает один и тот же .display-content/media__layer. -->
+        <section class="showcase-display">
+            <div class="display-media">
+                <img class="display-media__layer active" id="media-state-default"
+                     src="{{ media_url(site_owner.avatar_url) }}" alt="{{ site_owner.name }} {{ site_owner.surname }}">
+                {% for d in directions %}
+                <picture>
+                    {% if d.mobile_url %}
+                    <!-- На узких экранах браузер сам скачает ТОЛЬКО эту
+                         маленькую предобрезанную 9:16 версию (см. mobile_url
+                         в БД / make_mobile_crop в __init__.py) — а не весь
+                         ландшафтный оригинал, как было раньше через чистый
+                         CSS object-position. -->
+                    <source media="(max-width: 767px)" srcset="{{ media_url(d.mobile_url) }}">
+                    {% endif %}
+                    <img class="display-media__layer" id="media-preview-{{ d.category_slug }}"
+                         src="{{ media_url(d.file_url) }}" alt="{{ d.category_name }}" data-color-hex="{{ d.color_hex or '' }}"
+                         style="--mobile-focus-x: {{ d.mobile_focus_x if d.mobile_focus_x is not none else 50 }}%; --mobile-focus-y: {{ d.mobile_focus_y if d.mobile_focus_y is not none else 50 }}%; --mobile-zoom: {{ d.mobile_zoom if d.mobile_zoom is not none else 1.0 }};">
+                </picture>
+                {% endfor %}
+            </div>
+            <div class="display-scrim"></div>
+
+            <button class="display-back" id="display-back">← Назад</button>
+
+            <!-- Состояние по умолчанию -->
+            <div class="display-content active" id="state-default">
+                <p class="manifesto-eyebrow">EST. {{ site_owner.created_at.year if site_owner and site_owner.created_at else current_year }} // PORTFOLIO</p>
+                <h1 class="manifesto-title">{{ site_owner.name }}<br><span class="italic">{{ site_owner.surname }}</span></h1>
+                <p class="manifesto-desc">Привет, я фотограф. Работаю с репортажами, прогулками, семейными кадрами — пишите с любым запросом, обсудим детали.</p>
+            </div>
+
+            <!-- Превью по направлениям (категориям) -->
+            {% for d in directions %}
+            <div class="display-content" id="preview-{{ d.category_slug }}">
+                <h2 class="manifesto-title preview-title">{{ d.category_name }}</h2>
+                <p class="preview-desc">{{ d.category_description or '' }}</p>
+                <a href="{{ url_for('gallery', category=d.category_slug) }}" class="preview-btn">Смотреть альбомы <span>→</span></a>
+            </div>
+            {% endfor %}
+
+            <!-- Точки-индикатор — видны только на мобильной ширине (см.
+                 .hero-dots в style.css), на десктопе там же справа есть
+                 полноценный текстовый список категорий, точки ни к чему.
+                 Тап по точке тоже переключает слайд (см. script.js). -->
+            {% if directions %}
+            <div class="hero-dots" id="hero-dots" aria-hidden="true">
+                <span class="hero-dots__item is-active"></span>
+                {% for d in directions %}
+                <span class="hero-dots__item"></span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- МЕНЮ КАТЕГОРИЙ — текстовый список рядом с фото (только десктоп,
+             на мобильной ширине скрыт: там свайп по самому фото, см. выше) -->
+        {% if directions %}
+        <section class="showcase-menu">
+            {% for d in directions %}
+            <a href="{{ url_for('gallery', category=d.category_slug) }}" class="showcase-item" data-target="preview-{{ d.category_slug }}" data-bg-word="{{ d.category_name.split(' ')[0]|upper if d.category_name else '' }}">
+                <span class="showcase-item__num">{{ '%02d' | format(loop.index) }}</span>
+                <h2 class="showcase-item__title">{{ d.category_name }}</h2>
+                {% if d.category_tagline %}<span class="showcase-item__tag">{{ d.category_tagline }}</span>{% endif %}
+            </a>
+            {% endfor %}
+        </section>
+        {% endif %}
+    </main>
+
+    <!-- УСЛУГИ -->
+    {% if services %}
+    <section class="services">
+        <div class="services__inner">
+            <h2 class="services__title">Услуги</h2>
+            <ul class="services__list">
+                {% for s in services %}
+                <li class="services__item{{ ' services__item--highlight' if s.is_highlighted else '' }}">
+                    <span class="services__num">{{ '%02d' | format(loop.index) }}</span>
+                    <span class="services__name">{{ s.title }}</span>
+                    <span class="services__desc">{{ s.description }}</span>
+                    {% if s.price or s.badge_text %}
+                    <span class="services__meta">
+                        {% if s.price %}<span class="services__price">{{ '%g' | format(s.price) }} ₽/час</span>{% endif %}
+                        {% if s.badge_text %}<span class="services__badge">{{ s.badge_text }}</span>{% endif %}
+                    </span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- РЕТУШЬ ДО/ПОСЛЕ -->
+    {% if retouch_sliders %}
+    <section class="retouch">
+        <div class="retouch__inner">
+            <h2 class="retouch__title">Ретушь <span class="italic">до / после</span></h2>
+            <p class="retouch__intro">Два разных типа обработки — потяните за границу, чтобы сравнить.</p>
+
+            <div class="retouch__grid">
+                {% for r in retouch_sliders %}
+                <div class="compare" data-compare>
+                    <div class="compare__frame" style="--pos: 50%;">
+                        <div class="compare__img compare__img--after" style="background-image:url('{{ media_url(r.after_url) }}');"></div>
+                        <div class="compare__img compare__img--before" style="background-image:url('{{ media_url(r.before_url) }}');"></div>
+                        <span class="compare__tag compare__tag--before">До</span>
+                        <span class="compare__tag compare__tag--after">После</span>
+                        <div class="compare__handle">
+                            <span class="compare__handle-line"></span>
+                            <span class="compare__handle-grip">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7 3 12l5 5M16 7l5 5-5 5M4 12h16"/></svg>
+                            </span>
+                        </div>
+                    </div>
+                    <p class="compare__caption">{{ r.caption or r.tab_name }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+{% endblock %}

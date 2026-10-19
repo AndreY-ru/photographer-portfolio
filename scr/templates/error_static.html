@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+{# Запасная страница 500: рендерится в обход context_processor (без запросов к БД),
+   когда не удалось показать error.html — например, база недоступна. #}
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ 'Страница не найдена' if code == 404 else 'Ошибка на сайте' }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='icons/favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/fonts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/error.css') }}">
+</head>
+<body class="err-static">
+    {% include "_error_body.html" %}
+</body>
+</html>

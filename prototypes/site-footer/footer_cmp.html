@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Подвал сайта</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Manrope:wght@500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #0c0c0d; color: #eae6dc; font: 500 14px 'Manrope', sans-serif; }
+  header { padding: 18px 28px 6px; }
+  h1 { margin: 0 0 4px; font: 600 1.9rem 'Cormorant Garamond', serif; }
+  p { margin: 0; color: #8f8a80; max-width: 1060px; line-height: 1.5; }
+  .pick { display: flex; gap: 8px; padding: 14px 28px; flex-wrap: wrap; }
+  .pick button { text-align: left; border: 1px solid rgba(234,230,220,.14); background: none; color: #8f8a80; border-radius: 12px;
+    padding: 9px 14px; cursor: pointer; font: inherit; font-size: 12.5px; max-width: 300px; }
+  .pick button strong { display: block; color: #eae6dc; font: 600 1.1rem 'Cormorant Garamond', serif; margin-bottom: 2px; }
+  .pick button[aria-pressed="true"] { border-color: #e6b322; background: rgba(230,179,34,.07); }
+  .pick .star { border-color: rgba(230,179,34,.55); }
+  .row { display: flex; gap: 36px; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 4px 28px 24px; }
+  figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  figcaption { color: #8f8a80; }
+  figcaption a { color: #e6b322; }
+  .desk { --s: .55; width: calc(1440px * var(--s)); height: calc(900px * var(--s)); overflow: hidden; border-radius: 10px; box-shadow: 0 0 0 1px #2a2a2c; }
+  .desk iframe { width: 1440px; height: 900px; border: 0; transform: scale(var(--s)); transform-origin: 0 0; }
+  .phone { --s: .6; width: calc(390px * var(--s) + 16px); height: calc(844px * var(--s) + 16px); padding: 8px; border-radius: 36px; background: #000;
+    box-shadow: 0 0 0 2px #2a2a2c; overflow: hidden; }
+  .phone iframe { width: 390px; height: 844px; border: 0; border-radius: 30px; transform: scale(var(--s)); transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Подвал сайта — варианты</h1>
+  <p>Подвал один на все страницы. Правовые ссылки остаются (они обязательны), соцсети — те же, что в «Связаться». Волк с «Guided by the Wisewolf» сохранён везде. На телефоне снизу оставлено место под кнопку «Связаться».</p>
+</header>
+<div class="pick" id="pick">
+  <button data-v="now"><strong>Сейчас</strong>Как на сайте: копирайт «Lense &amp; Light», правовые ссылки и волк справа.</button>
+  <button data-v="fa"><strong>А — Подпись</strong>Сверху имя и «Фотограф · концерты, события, косплей», меню и кружки соцсетей с «Наверх». Снизу тонкая строка: ©, правовые ссылки, волк.</button>
+  <button data-v="fb"><strong>Б — Полоса данных</strong>Подвал как строка данных камеры: мигающий REC, имя, Sony α6000, 10–100 мм, соцсети, волк. Правовые ссылки под ней.</button>
+  <button data-v="fc"><strong>В — Конец плёнки</strong>Край плёнки с перфорацией и отметками кадров 34–36, «Конец плёнки — спасибо, что досмотрели».</button>
+  <button class="star" data-v="fd"><strong>Г — По центру ★</strong>Волк крупно по центру, под ним имя, соцсети, правовые ссылки и © одной колонкой.</button>
+  <button data-v="fe"><strong>Д — Подпись</strong>Как Г, но имя — крупная подпись курсивом: при появлении «расписывается» слева направо, снизу золотой росчерк.</button>
+  <button data-v="ff"><strong>Е — Рамка фокуса</strong>Волк и имя в уголках автофокуса: рамка «ловит» их при появлении и мигает, как при захвате фокуса, сверху «● AF».</button>
+  <button class="star" data-v="fg"><strong>Ж — Волчий след ★</strong>К волку по подвалу тянется цепочка следов лапок — появляются по одному, будто волчица прошла.</button>
+  <button data-v="fh"><strong>З — Объектив</strong>Волк внутри кольца объектива со шкалой 10–100 мм (как твой зум). Наведёшь — кольцо поворачивается.</button>
+  <button data-v="fi"><strong>И — Тропа к волку</strong>Следы выходят из-за левого края и по дуге приходят к волку, ярче с каждым шагом. Дошли — волк подпрыгивает и виляет хвостом. Нажмёшь на волка — пройдут ещё раз.</button>
+  <button data-v="fj"><strong>К — Следы за курсором</strong>Водишь мышью по подвалу — за ней остаются следы и тают. На телефоне: тапнул — от пальца к волку пробегает цепочка.</button>
+  <button data-v="fk"><strong>Л — Волчица гуляет</strong>По фону подвала иногда проходит цепочка следов из края в край — каждый раз в другом месте и направлении. Тихий фон.</button>
+  <button data-v="fl"><strong>М — Минимал</strong>Самый простой: три маленьких следа перед волком, имя и значки соцсетей одной строкой, ссылки и © внизу.</button>
+  <button class="star" data-v="fm"><strong>Н — Тропа · курсор · прогулка ★</strong>Следы идут к волку, он загорается. Нажми на волка — «Великая волчица наблюдает» и следы за курсором. Ещё раз — гуляет по фону. Ещё — снова бежит к волку и опять за курсором.</button>
+</div>
+<div class="row">
+  <figure><div class="desk"><iframe id="fd" title="На компьютере"></iframe></div><figcaption>На компьютере · <a id="full" href="#" target="_blank">открыть на весь экран</a></figcaption></figure>
+  <figure><div class="phone"><iframe id="fp" title="На телефоне"></iframe></div><figcaption>На телефоне</figcaption></figure>
+</div>
+<script>
+  const pick = document.getElementById('pick');
+  const url = v => (v === 'now' ? '/about' : `/about?v=${v}`);
+  const show = v => {
+    document.getElementById('fd').src = url(v); document.getElementById('fp').src = url(v);
+    document.getElementById('full').href = url(v);
+    pick.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  };
+  // окна сразу прокручиваются к подвалу
+  for (const id of ['fd', 'fp']) document.getElementById(id).addEventListener('load', e => {
+    const w = e.target.contentWindow; setTimeout(() => w.scrollTo(0, w.document.body.scrollHeight), 400);
+  });
+  pick.addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(b.dataset.v); });
+  show(new URLSearchParams(location.search).get('v') || 'fm');
+</script>
+</body>
+</html>

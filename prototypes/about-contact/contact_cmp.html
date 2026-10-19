@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Контакты «Обо мне»</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Manrope:wght@500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #0c0c0d; color: #eae6dc; font: 500 14px 'Manrope', sans-serif; }
+  header { padding: 18px 28px 6px; }
+  h1 { margin: 0 0 4px; font: 600 1.9rem 'Cormorant Garamond', serif; }
+  p { margin: 0; color: #8f8a80; max-width: 1060px; line-height: 1.5; }
+  .pick { display: flex; gap: 8px; padding: 14px 28px; flex-wrap: wrap; }
+  .pick button { text-align: left; border: 1px solid rgba(234,230,220,.14); background: none; color: #8f8a80; border-radius: 12px;
+    padding: 9px 14px; cursor: pointer; font: inherit; font-size: 12.5px; max-width: 300px; }
+  .pick button strong { display: block; color: #eae6dc; font: 600 1.1rem 'Cormorant Garamond', serif; margin-bottom: 2px; }
+  .pick button[aria-pressed="true"] { border-color: #e6b322; background: rgba(230,179,34,.07); }
+  .pick .star { border-color: rgba(230,179,34,.55); }
+  .row { display: flex; gap: 36px; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 4px 28px 24px; }
+  figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  figcaption { color: #8f8a80; }
+  figcaption a { color: #e6b322; }
+  .desk { --s: .55; width: calc(1440px * var(--s)); height: calc(900px * var(--s)); overflow: hidden; border-radius: 10px; box-shadow: 0 0 0 1px #2a2a2c; }
+  .desk iframe { width: 1440px; height: 900px; border: 0; transform: scale(var(--s)); transform-origin: 0 0; }
+  .phone { --s: .6; width: calc(390px * var(--s) + 16px); height: calc(844px * var(--s) + 16px); padding: 8px; border-radius: 36px; background: #000;
+    box-shadow: 0 0 0 2px #2a2a2c; overflow: hidden; }
+  .phone iframe { width: 390px; height: 844px; border: 0; border-radius: 30px; transform: scale(var(--s)); transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Блок «Готовы создавать?» — варианты</h1>
+  <p>Во всех вариантах добавлена почта. На ПК нажатие на телефон или почту копирует их (написать письмо с компьютера часто нечем), на телефоне — обычный звонок и письмо. Почта тут выдуманная, на сайте возьмётся из профиля.</p>
+</header>
+<div class="pick" id="pick">
+  <button data-v="now"><strong>Сейчас</strong>Как на сайте сейчас: заголовок по центру, белые кнопки, телефон строкой.</button>
+  <button data-v="ca"><strong>А — Список</strong>Заголовок слева, справа строки «иконка · название · значение · стрелка». Наведение — строка подсвечивается и подчёркивается.</button>
+  <button data-v="cb"><strong>Б — Рамка фокуса</strong>Блок в уголках автофокуса с REC, каналы плитками; у плитки при наведении появляется своя рамка.</button>
+  <button data-v="cc"><strong>В — Большая почта</strong>Почта огромным курсивом — главный способ связи, остальные — аккуратными кнопками ниже.</button>
+  <button data-v="cd"><strong>Г — Меню камеры</strong>Список каналов как меню на экране камеры Sony: оранжевая подсветка пункта, вкладки и заряд батареи.</button>
+</div>
+<div class="row">
+  <figure><div class="desk"><iframe id="fd" title="На компьютере"></iframe></div><figcaption>На компьютере · <a id="full" href="#" target="_blank">открыть на весь экран</a></figcaption></figure>
+  <figure><div class="phone"><iframe id="fp" title="На телефоне"></iframe></div><figcaption>На телефоне</figcaption></figure>
+</div>
+<script>
+  const pick = document.getElementById('pick');
+  const url = v => (v === 'now' ? '/about' : `/about?v=${v}`) + '#contact';
+  const show = v => {
+    document.getElementById('fd').src = url(v); document.getElementById('fp').src = url(v);
+    document.getElementById('full').href = url(v);
+    pick.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  };
+  pick.addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(b.dataset.v); });
+  show(new URLSearchParams(location.search).get('v') || 'ca');
+</script>
+</body>
+</html>

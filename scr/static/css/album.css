@@ -1,0 +1,461 @@
+/* =========================================
+   ГЕРОЙ АЛЬБОМА
+========================================= */
+.album-page { background: var(--base-bg); overflow-x: hidden; }
+
+.back-to-gallery {
+    /* Сдвинута ниже стеклянной карточки с REC/ISO/F/Температурой (.vf-island
+       в шапке) — раньше метили в пустое место под шапкой, а туда теперь
+       садится карточка. left выровнен по тому же отступу, что и лого/шапка.
+       Цвет — --photo-ink (не --text-main): ссылка лежит на фото-герое с
+       постоянно тёмной шторкой (.album-hero__scrim), которая не зависит от
+       темы сайта, поэтому и текст здесь должен всегда оставаться светлым. */
+    position: absolute; top: 130px; left: 5vw; z-index: 24;
+    color: var(--photo-ink); text-decoration: none; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    transition: color 0.3s;
+}
+.back-to-gallery:hover { color: var(--accent-wheat); }
+
+/* Верхняя часть шторки (.album-hero__scrim ниже) нарочно слабая (20%
+   чёрного) — специально, чтобы не убивать сам верх фото затемнением
+   там, где чаще всего и есть интересный кадр. Но это значит, что на
+   светлом фото постоянный светлый --photo-ink тут может потерять
+   контраст. header-on-light-photo — тот же переключатель, что и у
+   шапки (см. style.css и новую секцию в script.js, меряющую яркость
+   .album-hero__bg img) — раз он уже есть, используем его и здесь. */
+body.album-page.header-on-light-photo .back-to-gallery {
+    color: #080808;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.55);
+}
+
+@media (max-width: 768px) {
+    /* На узких экранах карточка с камерой может перенестись на 2 строки
+       (flex-wrap в .vf-island__pill) и стать выше — даём ссылке больше
+       запаса сверху. */
+    .back-to-gallery { top: 83px; }
+}
+
+.album-hero {
+    position: relative; height: 100vh; width: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    overflow: hidden;
+}
+.album-hero__bg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+}
+.album-hero__bg img {
+    width: 100%; height: 100%; object-fit: cover;
+}
+@media (min-width: 768px) {
+    /* На десктопе своего отдельного обрезанного файла для обложки нет —
+       показывается общая cover_url целиком, а нужный участок вырезается
+       чисто через object-position (тот же приём, что и в gallery.css). */
+    .album-hero__bg img {
+        object-position: var(--cover-focus-x, 50%) var(--cover-focus-y, 50%);
+        transform: scale(var(--cover-zoom, 1));
+        transform-origin: var(--cover-focus-x, 50%) var(--cover-focus-y, 50%);
+    }
+}
+/* На мобилке (см. <picture> в album.html) отдаётся уже готовый, заранее
+   обрезанный под 9:16 файл (cover_mobile_url, редактор "Обложка для
+   мобильной версии" в админке) — если поверх него ЕЩЁ РАЗ применить
+   декстопные --cover-focus-x/y, кадр сместится мимо того, что админ
+   специально центрировал в мобильном редакторе. Поэтому здесь — только
+   обычный object-fit: cover без сдвига (уже задан в базовом правиле выше),
+   а сам object-position/transform из десктопного блока сюда не попадает. */
+.album-hero__scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(8,8,8,0.2) 0%, rgba(8,8,8,0.6) 50%, rgba(8,8,8,1) 100%);
+}
+.album-hero__title {
+    position: relative; z-index: 10; max-width: 90vw; margin: 0 auto;
+    padding: 0 5vw; text-align: center;
+    font-family: var(--font-heading); font-size: clamp(3rem, 8vw, 7rem);
+    text-transform: uppercase; letter-spacing: 0.05em; color: var(--photo-ink);
+    text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+.album-hero__desc {
+    position: relative; z-index: 10; max-width: 640px; margin: 1.2rem auto 0;
+    padding: 0 5vw; text-align: center;
+    color: var(--photo-ink); font-size: 1rem; line-height: 1.6;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+}
+.album-hero__desc p { margin: 0 0 0.6em; }
+.album-hero__desc p:last-child { margin-bottom: 0; }
+.album-hero__desc a { color: var(--accent-wheat); }
+.album-hero__date {
+    position: relative; z-index: 10; margin-top: 0.8rem;
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--photo-ink-muted);
+}
+.album-hero__scroll {
+    position: absolute; bottom: 40px; z-index: 10;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em;
+    color: var(--photo-ink-muted); animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; transform: translateY(5px); } }
+
+/* Поделиться / скачать альбом целиком — низ шторки тут почти сплошной
+   чёрный, поэтому небольшая тёмная стеклянная подложка читается всегда,
+   на любом фото, без доп. адаптации под яркость (см. коммент в album.html
+   у самого блока). Иконки — по образцу .icon-btn у карточек фото ниже. */
+.album-hero__utility {
+    position: absolute; left: 5vw; bottom: 40px; z-index: 15;
+    display: flex; gap: 10px;
+}
+.album-hero__util-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(8, 8, 8, 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: var(--photo-ink); text-decoration: none; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+.album-hero__util-btn:hover { background: rgba(8, 8, 8, 0.75); transform: translateY(-2px); }
+.album-hero__util-btn svg {
+    width: 17px; height: 17px; stroke: currentColor; fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+@media (max-width: 480px) {
+    /* На узких экранах "Листай вниз" по центру и наши кнопки слева друг
+       другу не мешают, но опустим чуть ниже общий базовый отступ не
+       нужен — оставляем тот же bottom, что и у .album-hero__scroll,
+       чтобы визуально быть на одной линии, как в макете. */
+    .album-hero__utility { bottom: 34px; }
+}
+
+/* Короткое всплывающее уведомление ("Ссылка скопирована" и т.д.) для
+   кнопок на обложке альбома — минимальный, самодостаточный тост, не
+   завязанный на toast-разметку из admin.js/album.js (та живёт в других
+   файлах и по-другому устроена). */
+.album-toast {
+    position: fixed; left: 50%; bottom: 30px; z-index: 20000;
+    transform: translate(-50%, 20px);
+    background: rgba(8, 8, 8, 0.9); color: #fff;
+    font-size: 0.8rem; padding: 10px 18px; border-radius: 20px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease;
+    max-width: 86vw; text-align: center;
+}
+.album-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+
+/* Окна .site-notice: перед первым скачиванием и "как вас зовут" (выбор
+   фото). Внешний вид целиком от модалки "Связаться" (.contact-modal в
+   style.css, на мобильной ширине — шторка снизу). Здесь только отличия:
+   z-index выше лайтбокса (100000) — окна открываются и поверх него — и
+   кнопка-действие внизу. */
+.contact-modal.site-notice { z-index: 100010; }
+.site-notice__btn {
+    display: block; width: 100%; margin-top: 22px; padding: 14px 20px;
+    border: none; border-radius: 14px; cursor: pointer;
+    background: var(--accent-wheat); color: #141210;
+    font-family: var(--font-ui); font-size: 0.8rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.site-notice__btn:hover { opacity: 0.9; }
+.site-notice__btn:active { transform: scale(0.98); }
+.site-notice__btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* =========================================
+   MASONRY СЕТКА (Колонки)
+========================================= */
+.album-content { padding: 0 2vw 15vh; max-width: 1800px; margin: 0 auto; }
+
+.masonry-gallery {
+    column-count: 4; /* На ПК 4 колонки */
+    column-gap: 8px; /* Зазор между колонками */
+}
+
+@media (max-width: 1200px) { .masonry-gallery { column-count: 3; } }
+@media (max-width: 768px) { .masonry-gallery { column-count: 2; } }
+@media (max-width: 480px) { .masonry-gallery { column-count: 1; } }
+
+/* Раскладка скриптом (album.js, "РАСКЛАДКА СЕТКИ ПО КОЛОНКАМ"): фото по
+   порядку слева направо, каждое в самую короткую колонку, колонок не
+   больше, чем фото. CSS-колонки выше — запасной вариант без JS. */
+.masonry-gallery.is-js-columns { column-count: auto; display: flex; gap: 8px; align-items: flex-start; }
+.masonry-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.masonry-col .photo-card { margin-bottom: 0; }
+
+/* "Пустое место" (заглушка из админки) — невидимый блок той же пропорции,
+   что и фото, чтобы расставлять фото в сетке свободно. На узких экранах
+   (меньше 3 колонок) скрыт — и скриптом, и тут, для варианта без JS. */
+.photo-spacer { break-inside: avoid; margin-bottom: 8px; visibility: hidden; }
+.masonry-col .photo-spacer { margin-bottom: 0; }
+.photo-spacer.ratio-sq  { aspect-ratio: 1 / 1; }
+.photo-spacer.ratio-hor { aspect-ratio: 3 / 2; }
+.photo-spacer.ratio-ver { aspect-ratio: 2 / 3; }
+.photo-spacer[hidden] { display: none; }
+@media (max-width: 768px) { .photo-spacer { display: none; } }
+
+.photo-card {
+    break-inside: avoid; /* Чтобы фото не разрывало между колонками */
+    margin-bottom: 8px; /* Зазор снизу */
+    position: relative;
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: zoom-in;
+    background-color: #111; /* Заглушка, пока грузится */
+}
+
+/* 3 Шаблона пропорций для Админки */
+.photo-card.ratio-sq  { aspect-ratio: 1 / 1; }  /* Квадрат */
+.photo-card.ratio-hor { aspect-ratio: 3 / 2; }  /* Горизонталь */
+.photo-card.ratio-ver { aspect-ratio: 2 / 3; }  /* Вертикаль */
+
+.photo-card img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.photo-card:hover img { transform: scale(1.03); }
+
+/* Оверлей снизу (как у Vigbo) */
+.photo-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 35%);
+    opacity: 0; transition: opacity 0.3s ease;
+    display: flex; align-items: flex-end; justify-content: flex-end;
+    padding: 15px; 
+    pointer-events: none; /* Пропускаем клики сквозь градиент на саму карточку */
+}
+.photo-card:hover .photo-overlay { opacity: 1; }
+
+.photo-actions {
+    display: flex; gap: 12px;
+    pointer-events: auto; /* А вот сами кнопки кликать можно */
+}
+
+.icon-btn {
+    background: none; border: none; color: #fff;
+    font-size: 1.3rem; text-decoration: none; cursor: pointer;
+    opacity: 0.6; transition: opacity 0.2s, transform 0.2s, color 0.2s;
+    font-family: var(--font-ui); display: block;
+}
+.icon-btn:hover {
+    opacity: 1; transform: translateY(-2px) scale(1.1); color: var(--accent-wheat);
+}
+
+/* =========================================
+   ЛАЙТБОКС (ПРОСМОТРЩИК)
+========================================= */
+.lightbox {
+    position: fixed; inset: 0; z-index: 100000;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+}
+.lightbox.active { opacity: 1; pointer-events: auto; }
+
+.lightbox-backdrop {
+    position: absolute; inset: 0; background: rgba(5, 5, 5, 0.95);
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+}
+
+/* Верхняя панель */
+.lightbox-top {
+    position: absolute; top: 0; left: 0; width: 100%;
+    padding: 20px 40px; display: flex; justify-content: space-between;
+    align-items: center; z-index: 10; pointer-events: none;
+}
+.lb-counter { color: #fff; font-size: 0.85rem; font-variant-numeric: tabular-nums; opacity: 0.6; }
+.lb-actions { display: flex; gap: 15px; }
+/* pointer-events:auto тут был БЕЗУСЛОВНЫМ — из-за этого кнопки лайтбокса
+   (лайк/поделиться/скачать/полный экран/закрыть) оставались кликабельными
+   даже когда сам .lightbox закрыт (opacity:0, pointer-events:none). Так как
+   .lightbox — position:fixed на весь экран с z-index:100000 (выше шапки
+   сайта, у неё z-index:20), эти невидимые кнопки перехватывали клики по
+   верхнему меню "Главная/Галерея/Обо мне". Включаем клики по ним только
+   когда лайтбокс действительно открыт. */
+.lightbox.active .lb-actions { pointer-events: auto; }
+.lb-btn {
+    background: none; border: none; color: #fff; font-size: 1.2rem;
+    opacity: 0.6; cursor: pointer; transition: opacity 0.3s; text-decoration: none;
+}
+.lb-btn:hover { opacity: 1; }
+
+/* Навигация (Стрелки) */
+.lb-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: #fff; font-size: 3rem;
+    font-weight: 300; opacity: 0.4; cursor: pointer; padding: 20px;
+    z-index: 10; transition: opacity 0.3s, transform 0.3s;
+}
+.lb-nav:hover { opacity: 1; }
+.lb-nav.prev { left: 20px; }
+.lb-nav.next { right: 20px; }
+.lb-nav.prev:hover { transform: translate(-10px, -50%); }
+.lb-nav.next:hover { transform: translate(10px, -50%); }
+
+/* Фото с зумом */
+.lightbox-image-container {
+    position: relative; width: 90vw; height: 85vh;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 5; overflow: hidden; cursor: grab;
+}
+.lightbox-image-container:active { cursor: grabbing; }
+#lb-image {
+    max-width: 100%; max-height: 100%; object-fit: contain;
+    transition: transform 0.2s ease-out; /* Плавность для колесика */
+    user-select: none;
+}
+/* Запрет выделения веб-версии */
+#lb-image::selection { background: transparent; }
+
+/* Нижняя панель (EXIF) */
+.lightbox-bottom {
+    position: absolute; bottom: 30px; left: 0; width: 100%;
+    display: flex; justify-content: center; z-index: 10;
+}
+.exif-pill {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    max-width: min(720px, 90vw);
+    background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 18px 34px; border-radius: 20px;
+    transition: transform 0.4s ease, opacity 0.4s ease;
+}
+.exif-pill.hidden { transform: translateY(50px); opacity: 0; pointer-events: none; }
+
+/* Подпись к фото (markdown из photo.description). Пустая — не занимает места. */
+.exif-caption { font-size: 0.85rem; color: #eee; line-height: 1.5; text-align: center; margin: 0; }
+.exif-caption:empty { display: none; }
+.exif-caption p { margin: 0 0 0.4em; }
+.exif-caption p:last-child { margin-bottom: 0; }
+.exif-caption a { color: var(--accent-wheat); }
+
+.exif-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 20px; }
+.exif-row:empty { display: none; }
+.exif-item { font-size: 0.75rem; color: #ccc; display: flex; align-items: center; gap: 6px; }
+.exif-item span { color: #fff; font-weight: 500; }
+/* Поле, которого нет у конкретного фото — скрываем целиком, а не оставляем "—" */
+.exif-item.is-empty { display: none; }
+.exif-close {
+    position: absolute; top: 10px; right: 14px;
+    background: none; border: none; color: #999; cursor: pointer; padding: 4px; transition: color 0.3s;
+}
+.exif-close:hover { color: #fff; }
+
+@media (max-width: 1000px) {
+    .exif-pill { border-radius: 15px; padding: 16px 20px; }
+    .lb-nav { display: none; } /* На мобилках только свайпы */
+}
+
+/* Иконки данных съёмки — тонкие линии в стиле кнопок лайтбокса (вместо эмодзи) */
+.exif-ico {
+    width: 14px; height: 14px; flex-shrink: 0;
+    stroke: currentColor; fill: none; stroke-width: 1.6px; stroke-linecap: round; stroke-linejoin: round;
+    color: #8f8a80;
+}
+
+/* Лента миниатюр всего альбома (выбор владельца по прототипу).
+   Фото и данные съёмки поднимаются над ней. */
+.lightbox .lightbox-image-container { height: calc(100vh - 210px); height: calc(100dvh - 210px); margin-top: -40px; }
+.lightbox .lightbox-bottom { bottom: 112px; }
+.lb-strip {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 10;
+    display: flex; gap: 8px; justify-content: safe center;
+    padding: 14px 24px calc(18px + env(safe-area-inset-bottom));
+    overflow-x: auto; scrollbar-width: none;
+    transition: opacity 0.3s ease;
+}
+.lb-strip::-webkit-scrollbar { display: none; }
+.lb-thumb {
+    flex-shrink: 0; width: 64px; height: 64px; padding: 0;
+    border: 2px solid transparent; border-radius: 6px; overflow: hidden;
+    background: #1a1a1a; cursor: pointer; opacity: 0.45;
+    transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
+}
+.lb-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lb-thumb:hover { opacity: 0.85; transform: translateY(-2px); }
+.lb-thumb[aria-current] { opacity: 1; border-color: var(--accent-wheat); }
+
+/* Режим «только фото» (кнопка полного экрана): всё, кроме фото, уходит */
+.lightbox.is-immersive .lightbox-top, .lightbox.is-immersive .lb-nav,
+.lightbox.is-immersive .lb-strip, .lightbox.is-immersive .lightbox-bottom {
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+.lightbox.is-immersive .lightbox-image-container { width: 100vw; height: 100vh; height: 100dvh; margin-top: 0; }
+.lightbox.is-immersive .lightbox-backdrop { background: #000; }
+/* Движение мыши или касание — на пару секунд видна только кнопка выхода */
+.lightbox.is-immersive.is-peek .lightbox-top { opacity: 1; }
+.lightbox.is-immersive.is-peek .lightbox-top .lb-btn:not(#lb-fullscreen),
+.lightbox.is-immersive.is-peek .lightbox-top .lb-counter { visibility: hidden; }
+.lightbox.is-immersive.is-peek .lb-actions { pointer-events: auto; }
+
+@media (max-width: 760px) {
+    .lightbox .lightbox-image-container { width: 100vw; height: calc(100dvh - 190px); margin-top: -30px; }
+    .lightbox .lightbox-bottom { bottom: 92px; }
+    .lb-strip { justify-content: flex-start; gap: 6px; padding: 10px 12px calc(14px + env(safe-area-inset-bottom)); }
+    .lb-thumb { width: 52px; height: 52px; }
+}
+
+
+/* =========================================
+    ИКОНКИ И НОВАЯ КНОПКА "НА ВЕСЬ ЭКРАН"
+========================================= */
+/* Базовый стиль для всех SVG на странице */
+.icon-btn svg, .expand-btn svg, .lb-btn svg, .lb-nav svg {
+    width: 22px; height: 22px;
+    stroke: currentColor; fill: none; stroke-width: 1.5px;
+    stroke-linecap: round; stroke-linejoin: round;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); /* Читаемость на светлом фоне */
+}
+.lb-nav svg { width: 44px; height: 44px; } /* Стрелки крупнее */
+
+/* Новая кнопка "Развернуть" в правом верхнем углу */
+.expand-btn {
+    position: absolute; top: 15px; right: 15px;
+    background: none; border: none; color: #fff; cursor: pointer;
+    opacity: 0; transform: translateY(-5px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 2; padding: 10px;
+}
+.photo-card:hover .expand-btn { opacity: 0.8; transform: translateY(0); }
+.expand-btn:hover { opacity: 1 !important; color: var(--accent-wheat); }
+.expand-btn:hover svg { transform: scale(1.1); }
+
+/* Эффекты при наведении на другие кнопки */
+.icon-btn:hover svg { transform: scale(1.1) translateY(-2px); }
+
+/* =========================================
+    СОСТОЯНИЕ "В ИЗБРАННОМ" (кнопка-сердечко)
+========================================= */
+.icon-btn.is-liked, .lb-btn.is-liked {
+    opacity: 1; color: var(--accent-wheat);
+}
+.icon-btn.is-liked svg, .lb-btn.is-liked svg {
+    fill: var(--accent-wheat); stroke: var(--accent-wheat);
+}
+
+.album-empty {
+    grid-column: 1 / -1; text-align: center; color: var(--text-muted);
+    padding: 15vh 0; font-size: 1rem;
+}
+
+/* Срок до удаления на обложке — под датой (.expiry-rec, style.css) */
+.album-hero .expiry-rec { position: relative; z-index: 10; margin-top: 14px; }
+
+/* =========================================
+   СКОЛЬКО ЧЕЛОВЕК ОТМЕТИЛИ ФОТО (выбрано по прототипу prototypes/album-extras, лайки «А»)
+   Число у сердечка (в оверлее и в лайтбоксе) и метка «♥ N» в углу фото —
+   видна всегда, при наведении уступает место кнопкам. Только числа, без имён.
+========================================= */
+.like-btn, #lb-like { display: inline-flex; align-items: center; gap: 4px; }
+.like-count { font: 600 0.82rem var(--font-ui); font-variant-numeric: tabular-nums; }
+.like-count:empty { display: none; }
+.like-chip {
+    position: absolute; z-index: 2; left: 10px; top: 10px; display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px 3px 6px; border-radius: 999px; background: rgba(10, 10, 10, 0.6); color: #eae6dc;
+    font: 600 0.7rem var(--font-ui); pointer-events: none; transition: opacity 0.2s;
+}
+.like-chip[hidden] { display: none; }
+.like-chip svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.like-chip .like-count { font-size: inherit; }
+.like-chip.is-mine { color: var(--accent-wheat); }
+.like-chip.is-mine svg { fill: var(--accent-wheat); }
+.photo-card:hover .like-chip { opacity: 0; }

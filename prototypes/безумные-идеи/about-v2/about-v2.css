@@ -1,0 +1,64 @@
+/* =========================================
+   «ОБО МНЕ» v2 — демо-страница /about-v2 (выбрана владельцем по прототипу
+   «О — Лапка Хоро»). Остальная страница — как в about.css, здесь только
+   первый блок: полароид, который трясёт лапка. Логика — about-v2.js.
+========================================= */
+.paw-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 7vw; align-items: center; }
+
+.paw-zone { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 30px 0 70px; }
+/* пока лапка на сцене, низ зоны обрезан, и лапа «вылезает» из-за края */
+.paw-zone.is-paw { clip-path: inset(-400px -400px 0 -400px); }
+
+/* Полароид. --dev — насколько проявился (0…1); без JS он сразу проявлен */
+.paw-polaroid {
+    --dev: 1;
+    position: relative; z-index: 2; margin: 0; width: min(100%, 440px); padding: 16px 16px 64px;
+    background: #f4f0e6; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+    cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+    transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(calc(-3deg + var(--dr, 0deg)));
+    transition: transform 0.7s cubic-bezier(0.34, 1.5, 0.64, 1);
+}
+.paw-polaroid.is-drag { cursor: grabbing; transition: none; z-index: 5; }
+.paw-polaroid.is-pawed { transition: none; }
+.paw-polaroid__tape {
+    position: absolute; z-index: 3; left: 50%; top: -14px; width: 110px; height: 30px; margin-left: -55px; transform: rotate(3deg);
+    background: rgba(230, 215, 170, 0.55); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.paw-polaroid__img { position: relative; display: block; aspect-ratio: 1 / 1.05; overflow: hidden; background: #2b2a26; }
+.paw-polaroid__img img {
+    display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none;
+    object-position: var(--mfx, 50%) var(--mfy, 30%);   /* кадр почти квадратный — берём точку фокуса «для телефона» */
+    opacity: calc(0.04 + var(--dev) * 0.96);
+    filter: grayscale(calc(100% - var(--dev) * 75%)) sepia(calc(0.6 - var(--dev) * 0.52)) contrast(calc(0.55 + var(--dev) * 0.5))
+            brightness(calc(1.5 - var(--dev) * 0.5)) blur(calc((1 - var(--dev)) * 3px));
+}
+.paw-polaroid figcaption {
+    position: absolute; left: 0; right: 0; bottom: 16px; text-align: center;
+    font: italic 500 1.6rem var(--font-heading); color: #3a332a;
+    opacity: 0; transition: opacity 0.6s;
+}
+.paw-polaroid.is-done figcaption { opacity: 1; }
+
+.paw-dev { position: relative; z-index: 1; width: min(60%, 260px); height: 2px; background: var(--border-color); border-radius: 2px; overflow: hidden; }
+.paw-dev i { display: block; height: 100%; width: 0; background: var(--accent-wheat); }
+
+.paw-paw {
+    position: absolute; z-index: 4; left: 0; top: 0; height: auto; transform-origin: 50% 22%;
+    pointer-events: none; will-change: transform; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
+}
+.paw-zone:not(.is-paw) .paw-paw { visibility: hidden; }
+
+.paw-title { margin: 0 0 2rem; font: 400 clamp(2.6rem, 5vw, 4.6rem)/1.05 var(--font-heading); color: var(--text-main); }
+.paw-title em { font-style: italic; color: var(--accent-wheat); }
+.paw-bio p { font-size: 1rem; line-height: 1.7; color: var(--text-muted); margin: 0 0 1.2rem; }
+.paw-bio .paw-bio__lead { font: italic 400 clamp(1.3rem, 2vw, 1.7rem)/1.4 var(--font-heading); color: var(--text-main); }
+.paw-sign { margin: 0; font: italic 400 1.6rem var(--font-heading); color: var(--text-main); }
+
+@media (max-width: 900px) {
+    .paw-hero { grid-template-columns: 1fr; gap: 1.4rem; }
+    .paw-polaroid { width: 82%; padding: 12px 12px 54px; }
+    .paw-polaroid figcaption { font-size: 1.35rem; bottom: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .paw-paw { display: none; }
+}

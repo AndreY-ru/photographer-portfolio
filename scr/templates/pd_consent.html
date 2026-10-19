@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{#
+   Согласие на обработку ПД (ч. 1 ст. 9 152-ФЗ: оформляется отдельно от
+   политики). Роуты /pd-consent (действующая редакция) и
+   /pd-consent/<редакция> (любая из PD_CONSENT_VERSIONS в __init__.py).
+   Это только обёртка — сам текст каждой редакции лежит в
+   pd_consent/<редакция>.html и после публикации НЕ правится.
+#}
+{% set operator_name = (site_owner.surname ~ ' ' ~ site_owner.name ~ (' ' ~ site_owner.middle_name if site_owner.middle_name else '')) if site_owner else '' %}
+
+{% block title %}Согласие на обработку персональных данных{% if site_owner %} | {{ site_owner.name }} {{ site_owner.surname }}{% endif %}{% endblock %}
+{% block body_class %}fade-in{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+{% endblock %}
+
+{% block content %}
+    <main class="legal-page">
+        <p class="legal-eyebrow">Правовая информация</p>
+        <h1 class="legal-title">Согласие на обработку персональных данных</h1>
+        <p class="legal-meta">
+            Редакция {{ version }}{% if is_current %} (действующая){% endif %}
+        </p>
+        {% if not is_current %}
+        <p class="legal-archive-note">
+            Это архивная редакция: с ней соглашались до выхода новой.
+            Действующая редакция — <a href="{{ url_for('pd_consent') }}">здесь</a>.
+        </p>
+        {% endif %}
+
+        {% include 'pd_consent/' ~ version ~ '.html' %}
+    </main>
+{% endblock %}

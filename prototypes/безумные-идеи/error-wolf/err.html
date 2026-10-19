@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{# ПРОТОТИП страниц ошибок. /_proto/error-pages/err?v=a|b|c|d&code=404|500 #}
+{% set v = request.args.get('v', 'a') %}
+{% set code = request.args.get('code', '404') %}
+{% set nf = code == '404' %}
+{% block title %}{{ 'Страница не найдена' if nf else 'Ошибка на сайте' }}{% endblock %}
+{% block body_class %}fade-in{% endblock %}
+
+{% block extra_css %}
+<style>
+.err { min-height: calc(100vh - 220px); min-height: calc(100svh - 220px); display: grid; place-items: center; padding: 140px 20px 60px;
+    color: var(--text-main); font-family: var(--font-ui); text-align: center; }
+.err__in { max-width: 640px; display: flex; flex-direction: column; align-items: center; }
+.err__eyebrow { font: 600 0.72rem var(--font-ui); letter-spacing: 0.32em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 18px; }
+.err__title { font: 500 clamp(2rem, 5vw, 3.2rem)/1.05 var(--font-heading); margin: 0 0 14px; }
+.err__text { color: var(--text-muted); line-height: 1.65; margin: 0 0 30px; max-width: 460px; }
+.err__btns { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.err__btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 999px; text-decoration: none;
+    font: 600 0.85rem var(--font-ui); letter-spacing: 0.04em; border: 1px solid var(--border-color); color: var(--text-main);
+    transition: border-color .25s, background-color .25s, color .25s; }
+.err__btn:hover { border-color: var(--accent-wheat); color: var(--accent-wheat); }
+.err__btn--main { background: var(--accent-wheat); border-color: var(--accent-wheat); color: #141210; }
+.err__btn--main:hover { background: transparent; }
+
+/* А — Нет фокуса: рамка автофокуса «ищет» и не находит */
+.vA .af { position: relative; width: min(380px, 78vw); aspect-ratio: 3 / 2; margin-bottom: 52px; display: grid; place-items: center; }
+.vA .af i { position: absolute; width: 34px; height: 34px; border: 0 solid var(--text-main); opacity: .8; }
+.vA .af i:nth-child(1) { left: 0; top: 0; border-width: 2px 0 0 2px; }
+.vA .af i:nth-child(2) { right: 0; top: 0; border-width: 2px 2px 0 0; }
+.vA .af i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 2px 2px; }
+.vA .af i:nth-child(4) { right: 0; bottom: 0; border-width: 0 2px 2px 0; }
+.vA .af-box { position: absolute; width: 64px; height: 64px; border: 1.5px solid var(--accent-wheat); border-radius: 2px;
+    animation: afHunt 3.2s ease-in-out infinite; }
+@keyframes afHunt { 0%,100% { transform: translate(-90px,-26px); } 25% { transform: translate(80px,-34px); } 50% { transform: translate(40px,30px); } 75% { transform: translate(-60px,22px); } }
+.vA .af-num { font: 300 clamp(4.5rem, 14vw, 7.5rem)/1 var(--font-heading); letter-spacing: 0.04em; opacity: .9; }
+.vA .af-hud { position: absolute; left: 0; right: 0; bottom: -28px; display: flex; justify-content: space-between;
+    font: 600 0.66rem var(--font-ui); letter-spacing: 0.22em; color: var(--text-muted); text-transform: uppercase; }
+.vA .af-hud b { color: var(--accent-wheat); font-weight: 600; animation: blinkSoft 1.6s steps(2) infinite; }
+@keyframes blinkSoft { 50% { opacity: .35; } }
+
+/* Б — Плёнка: кадр № 404 не проявился */
+.vB .strip { width: min(720px, 100vw); overflow: hidden; margin: 0 -20px 34px; padding: 14px 0; background: #17140f;
+    -webkit-mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+    position: relative; }
+.vB .strip::before, .vB .strip::after { content: ''; position: absolute; left: 0; right: 0; height: 8px;
+    background: repeating-linear-gradient(90deg, transparent 0 10px, #3a332a 10px 20px); }
+.vB .strip::before { top: 3px; } .vB .strip::after { bottom: 3px; }
+.vB .frames { display: flex; gap: 10px; justify-content: center; }
+.vB .frame { flex: none; width: 130px; aspect-ratio: 3 / 2; border-radius: 3px; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #3b2f22, #6a5236 60%, #2a2219); opacity: .55; }
+.vB .frame span { position: absolute; left: 6px; bottom: 4px; font: 600 0.6rem var(--font-ui); color: #e6b322; letter-spacing: .1em; }
+.vB .frame--miss { opacity: 1; background: radial-gradient(120% 90% at 85% 10%, #fff6dc, #f0b94a 45%, #8a4b1e 80%, #2a1a10); }
+.vB .frame--miss span { color: #2a1a10; }
+.vB .frame--err { opacity: 1; background: #0b0a08; outline: 1px dashed rgba(230,179,34,.5); outline-offset: -6px; }
+.vB .frame--err span { color: var(--accent-wheat); }
+
+/* В — Экран камеры: сообщение об ошибке как в меню */
+.vC .lcd { width: min(440px, 88vw); padding: 22px 24px 18px; margin-bottom: 30px; border-radius: 14px; text-align: left;
+    background: #0d0f10; border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 0 0 6px #050606, 0 30px 60px rgba(0,0,0,.4);
+    font-family: var(--font-ui); color: #e9e9e4; }
+.vC .lcd-top { display: flex; justify-content: space-between; font: 600 0.66rem var(--font-ui); letter-spacing: .16em; color: #8d918f; margin-bottom: 18px; }
+.vC .lcd-warn { display: flex; gap: 14px; align-items: center; margin-bottom: 16px; }
+.vC .lcd-warn svg { width: 38px; height: 38px; flex: none; stroke: #e6b322; fill: none; stroke-width: 1.8; stroke-linejoin: round; }
+.vC .lcd-warn b { display: block; font-size: 1.15rem; letter-spacing: .06em; }
+.vC .lcd-warn small { color: #8d918f; font-size: 0.8rem; }
+.vC .lcd-menu { border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+.vC .lcd-menu a { display: flex; justify-content: space-between; padding: 9px 10px; border-radius: 6px; color: #e9e9e4; text-decoration: none; font-size: 0.88rem; }
+.vC .lcd-menu a:first-child, .vC .lcd-menu a:hover { background: #e6b322; color: #141210; }
+.vC .lcd-menu a::after { content: '›'; }
+
+/* Г — Волчий след: следы уходят за край */
+.vD .trail { position: relative; width: min(560px, 90vw); height: 120px; margin-bottom: 20px; }
+.vD .trail svg { position: absolute; width: 26px; height: 26px; fill: var(--accent-wheat); opacity: 0; animation: pawIn 4.8s ease-out infinite; }
+@keyframes pawIn { 0% { opacity: 0; } 6% { opacity: .9; } 60% { opacity: .25; } 100% { opacity: 0; } }
+.vD .num { font: 300 clamp(4rem, 12vw, 6.5rem)/1 var(--font-heading); letter-spacing: .05em; margin-bottom: 18px; }
+.vD .num em { font-style: italic; color: var(--accent-wheat); }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="err v{{ v|upper }}">
+  <div class="err__in">
+  {% if v == 'a' %}
+    <div class="af" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="af-box"></span>
+      <span class="af-num">{{ code }}</span>
+      <span class="af-hud"><span>{{ 'AF-C' if nf else 'ERR' }}</span><b>{{ 'НЕТ ФОКУСА' if nf else 'ЗАТВОР' }}</b><span>ISO {{ code }}</span></span>
+    </div>
+    <p class="err__eyebrow">Ошибка {{ code }}</p>
+    <h1 class="err__title">{{ 'Кадр не найден' if nf else 'Затвор заклинило' }}</h1>
+    <p class="err__text">{{ 'Такой страницы нет: ссылка могла устареть, а альбом — истечь или стать приватным.' if nf else 'На сайте что-то сломалось. Попробуйте обновить страницу через минуту.' }}</p>
+  {% elif v == 'b' %}
+    <div class="strip" aria-hidden="true"><div class="frames">
+      {% for n in range(400, 409) %}<div class="frame{% if n|string == code %} {{ 'frame--miss' if not nf else 'frame--err' }}{% endif %}"><span>{{ n }}</span></div>{% endfor %}
+    </div></div>
+    <p class="err__eyebrow">Ошибка {{ code }}</p>
+    <h1 class="err__title">{{ 'Этот кадр не проявился' if nf else 'Плёнку засветило' }}</h1>
+    <p class="err__text">{{ 'На плёнке пустое место: страницы нет. Возможно, ссылка устарела или альбом уже удалён.' if nf else 'Что-то пошло не так на сервере. Обновите страницу через минуту — остальная плёнка цела.' }}</p>
+  {% elif v == 'c' %}
+    <div class="lcd" role="group" aria-label="Сообщение об ошибке">
+      <div class="lcd-top"><span>{{ 'PLAYBACK' if nf else 'SYSTEM' }}</span><span>■■■□ 75%</span></div>
+      <div class="lcd-warn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/></svg>
+        <div><b>ERR {{ code }}</b><small>{{ 'Снимок не найден на карте' if nf else 'Ошибка камеры. Перезапуск…' }}</small></div>
+      </div>
+      <nav class="lcd-menu">
+        <a href="/">На главную</a><a href="/gallery">Галерея</a><a href="/about">Связаться со мной</a>
+      </nav>
+    </div>
+    <h1 class="err__title">{{ 'Страница не найдена' if nf else 'Сайт споткнулся' }}</h1>
+    <p class="err__text" style="margin-bottom:0">{{ 'Ссылка могла устареть, а альбом — истечь или стать приватным.' if nf else 'Обновите страницу через минуту — скорее всего, всё уже заработает.' }}</p>
+  {% else %}
+    <div class="trail" aria-hidden="true">
+      {% for i in range(7) %}
+      <svg viewBox="0 0 24 24" style="left:{{ 4 + i * 14 }}%; top:{{ 52 if i % 2 else 22 }}px; transform: rotate(90deg); animation-delay: {{ i * 0.35 }}s">
+        <ellipse cx="12" cy="16" rx="5" ry="4.2"/><ellipse cx="5.5" cy="9.5" rx="2" ry="2.6"/><ellipse cx="10" cy="6" rx="2" ry="2.7"/><ellipse cx="14.5" cy="6" rx="2" ry="2.7"/><ellipse cx="19" cy="9.5" rx="2" ry="2.6"/>
+      </svg>
+      {% endfor %}
+    </div>
+    <div class="num" aria-hidden="true">{{ code[0] }}<em>{{ code[1] }}</em>{{ code[2] }}</div>
+    <h1 class="err__title">{{ 'Волчица унесла эту страницу' if nf else 'Волчица споткнулась' }}</h1>
+    <p class="err__text">{{ 'Следы ведут за край — здесь ничего нет. Ссылка устарела или альбом уже удалён.' if nf else 'На сайте что-то сломалось. Дайте ей минуту отряхнуться и обновите страницу.' }}</p>
+  {% endif %}
+    {% if v != 'c' %}
+    <div class="err__btns">
+      <a class="err__btn err__btn--main" href="/">На главную</a>
+      <a class="err__btn" href="/gallery">В галерею</a>
+    </div>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,28 @@
+{# Содержимое страницы ошибки «Нет фокуса» (переменная code: 404 или 500).
+   Отложенный вариант «Волчий след» — prototypes/безумные-идеи/error-wolf.
+   Общая часть error.html и error_static.html, стили — css/error.css. #}
+{% set not_found = code == 404 %}
+<main class="err">
+    <div class="err__in">
+        <div class="err-af" aria-hidden="true">
+            <i class="err-af__corner"></i><i class="err-af__corner"></i><i class="err-af__corner"></i><i class="err-af__corner"></i>
+            <span class="err-af__box"></span>
+            <span class="err-af__num">{{ code }}</span>
+            <span class="err-af__hud">
+                <span>{{ 'AF-C' if not_found else 'ERR' }}</span>
+                <b>{{ 'Нет фокуса' if not_found else 'Затвор' }}</b>
+                <span>ISO {{ code }}</span>
+            </span>
+        </div>
+        <p class="err__eyebrow">Ошибка {{ code }}</p>
+        <h1 class="err__title">{{ 'Кадр не найден' if not_found else 'Затвор заклинило' }}</h1>
+        <p class="err__text">
+            {% if not_found %}Такой страницы нет: ссылка могла устареть, а альбом — истечь или стать приватным.
+            {% else %}На сайте что-то сломалось. Попробуйте обновить страницу через минуту.{% endif %}
+        </p>
+        <div class="err__btns">
+            <a class="err__btn err__btn--main" href="{{ url_for('index') }}">На главную</a>
+            <a class="err__btn" href="{{ url_for('gallery') }}">В галерею</a>
+        </div>
+    </div>
+</main>

@@ -1,0 +1,200 @@
+/* ПРОТОТИП подвала сайта */
+.footer.ft { padding: 0 5vw; }
+.ft svg:not(.holo-icon) { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.ft a { text-decoration: none; color: inherit; }
+.ft-ico { display: block; width: 18px; height: 18px; background: currentColor;
+  -webkit-mask: var(--icon-url) center / contain no-repeat; mask: var(--icon-url) center / contain no-repeat; }
+.ft-soc { display: flex; gap: 10px; align-items: center; }
+.ft-soc-btn, .ft-up { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-color);
+  color: var(--text-muted); transition: color .3s, border-color .3s, transform .3s; }
+.ft-soc-btn:hover, .ft-up:hover { color: var(--accent-wheat); border-color: var(--accent-wheat); transform: translateY(-2px); }
+.ft-up svg { width: 18px; height: 18px; }
+.ft-legal { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.ft-legal a { font-size: .74rem; color: var(--text-muted); transition: color .3s; }
+.ft-legal a:hover { color: var(--accent-wheat); }
+.ft-copy { font-size: .74rem; color: var(--text-muted); }
+.ft-name { font: 400 1.9rem/1.1 var(--font-heading); color: var(--text-main); transition: color .3s; }
+.ft-name:hover { color: var(--accent-wheat); }
+.ft .wisewolf-seal { color: var(--text-muted); }
+.ft .wisewolf-seal:hover { color: var(--accent-wheat); }
+
+/* ================= А: ПОДПИСЬ ================= */
+.ft-top { display: grid; grid-template-columns: 1.2fr auto 1fr; align-items: center; gap: 30px; padding: 48px 0 36px; }
+.ft-brand { display: flex; flex-direction: column; gap: 6px; }
+.ft-role { font: 600 .7rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
+.ft-nav { display: flex; gap: 34px; }
+.ft-nav a { font: 600 .74rem var(--font-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--text-muted); transition: color .3s; }
+.ft-nav a:hover { color: var(--text-main); }
+.ft-a .ft-soc { justify-content: flex-end; }
+.ft-bottom { display: flex; align-items: center; gap: 28px; padding: 18px 0 22px; border-top: 1px solid var(--border-color); }
+.ft-bottom .ft-legal { flex: 1; }
+@media (max-width: 900px) {
+  .ft-top { grid-template-columns: 1fr; gap: 24px; padding: 36px 0 26px; }
+  .ft-nav { gap: 22px; flex-wrap: wrap; }
+  .ft-a .ft-soc { justify-content: flex-start; }
+  .ft-bottom { flex-direction: column; align-items: flex-start; gap: 14px; padding-bottom: 76px; }
+}
+
+/* ================= Б: ПОЛОСА ДАННЫХ ================= */
+.ft-strip { display: flex; align-items: center; margin-top: 30px; border: 1px solid var(--border-color); border-radius: 12px; background: rgba(255,255,255,.02); }
+.ft-cell { display: flex; align-items: center; gap: 8px; padding: 14px 22px; border-right: 1px solid var(--border-color);
+  font: 600 .72rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
+.ft-cell--name { color: var(--text-main); }
+.ft-rec { color: #ff5a4a; animation: ft-blink 1.6s steps(1) infinite; }
+@keyframes ft-blink { 50% { opacity: .2; } }
+.ft-cell--soc { padding-top: 6px; padding-bottom: 6px; }
+.ft-cell--soc .ft-soc-btn { width: 34px; height: 34px; border: 0; }
+.ft-cell--end { margin-left: auto; border-right: 0; }
+.ft-b > .ft-legal { justify-content: center; padding: 18px 0 26px; }
+@media (max-width: 900px) {
+  .ft-strip { flex-wrap: wrap; }
+  .ft-cell { padding: 12px 14px; flex: 1 1 auto; border-bottom: 1px solid var(--border-color); }
+  .ft-b > .ft-legal { justify-content: flex-start; padding-bottom: 76px; }
+}
+
+/* ================= В: КОНЕЦ ПЛЁНКИ ================= */
+.ft-film { margin: 0 -5vw; background: #141210; padding: 6px 0; }
+.ft-holes { height: 10px; margin: 0 4px; border-radius: 2px;
+  background: repeating-linear-gradient(90deg, transparent 0 9px, var(--base-bg) 9px 21px, transparent 21px 30px); }
+.ft-marks { display: flex; gap: 46px; padding: 6px 4vw; overflow: hidden; white-space: nowrap;
+  font: 700 .68rem var(--font-ui); letter-spacing: .2em; color: #d9822b; opacity: .8; }
+.ft-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 30px; padding: 34px 0 30px; }
+.ft-end { margin: 0 0 14px; font: 400 1.7rem/1.2 var(--font-heading); color: var(--text-main); }
+.ft-end em { color: var(--accent-wheat); }
+.ft-side { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+@media (max-width: 900px) {
+  .ft-row { flex-direction: column; align-items: flex-start; padding-bottom: 76px; }
+  .ft-side { align-items: flex-start; }
+  .ft-marks { gap: 28px; }
+}
+
+/* ================= Г: ПО ЦЕНТРУ ================= */
+.ft-center { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 46px 0 30px; text-align: center; }
+.ft-d .wisewolf-seal { flex-direction: column; gap: 6px; }
+.ft-d .holo-icon { width: 40px; height: 40px; }
+.ft-d .wisewolf-text { transform: translateY(-6px); font-size: .95rem; }
+.ft-d .wisewolf-seal:hover .wisewolf-text { transform: none; }
+.ft-d .ft-legal { justify-content: center; }
+@media (max-width: 900px) { .ft-center { padding-bottom: 76px; } }
+
+/* ================= Д…З: развитие Г ================= */
+.ft-e .ft-legal, .ft-f .ft-legal, .ft-g .ft-legal, .ft-h .ft-legal { justify-content: center; }
+@media (max-width: 900px) { .ft-e .ft-center, .ft-f .ft-center, .ft-g .ft-center, .ft-h .ft-center { padding-bottom: 76px; } }
+
+/* Д: ПОДПИСЬ */
+.ft-sign { position: relative; display: inline-block; padding: 0 10px 14px; }
+.ft-sign span { display: block; font: italic 400 clamp(2.6rem, 6vw, 4.6rem)/1.1 var(--font-heading); color: var(--text-main);
+  clip-path: inset(0 100% 0 0); transition: clip-path 1.8s cubic-bezier(.65,0,.35,1), color .3s; }
+.ft-sign:hover span { color: var(--accent-wheat); }
+.ft-flourish { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 26px; color: var(--accent-wheat);
+  stroke-dasharray: 460; stroke-dashoffset: 460; transition: stroke-dashoffset 1.2s cubic-bezier(.65,0,.35,1) 1.5s; }
+.ft-e.is-in .ft-sign span { clip-path: inset(0 0 0 0); }
+.ft-e.is-in .ft-flourish { stroke-dashoffset: 0; }
+.ft-e .wisewolf-seal { flex-direction: column; gap: 4px; }
+.ft-e .wisewolf-text { transform: translateY(-6px); font-size: .95rem; }
+.ft-e .wisewolf-seal:hover .wisewolf-text { transform: none; }
+
+/* Е: РАМКА ФОКУСА */
+.ft-af { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 34px 60px 28px; }
+.ft-af::before { content: ''; position: absolute; inset: 0; opacity: 0; transform: scale(1.35);
+  transition: transform 1s cubic-bezier(.16,1,.3,1) .2s, opacity .4s .2s;
+  --c: var(--accent-wheat); --l: 18px; --t: 2px;
+  background:
+    linear-gradient(var(--c), var(--c)) left top / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) left top / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) right top / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) left bottom / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) right bottom / var(--t) var(--l) no-repeat; }
+.ft-f.is-in .ft-af::before { opacity: 1; transform: scale(1); animation: ft-af-lock .5s 1.1s 2; }
+@keyframes ft-af-lock { 50% { opacity: .25; } }
+.ft-af-hud { position: absolute; top: 8px; left: 12px; font: 700 .62rem var(--font-ui); letter-spacing: .14em; color: var(--text-muted); opacity: 0; transition: opacity .4s 1.2s; }
+.ft-af-hud b { color: #4cd07a; }
+.ft-af-hud--r { left: auto; right: 12px; }
+.ft-f.is-in .ft-af-hud { opacity: 1; }
+.ft-f .holo-icon { width: 40px; height: 40px; }
+.ft-f .wisewolf-seal { flex-direction: column; gap: 6px; }
+.ft-f .wisewolf-text { display: none; }
+
+/* Ж: ВОЛЧИЙ СЛЕД */
+.ft-trail { position: relative; width: min(520px, 100%); height: 80px; }
+.ft-print { position: absolute; left: calc(var(--i) * 13%); top: calc(50% + var(--side) * 13px - 15px); width: 30px; height: 30px;
+  color: var(--accent-wheat); opacity: 0; transform: rotate(90deg) scale(.6); transition: opacity .35s, transform .35s; transition-delay: calc(var(--i) * .22s); }
+.ft .ft-print svg { width: 100%; height: 100%; fill: currentColor; stroke: none; }
+.ft-g.is-in .ft-print { opacity: calc(.25 + var(--i) * .08); transform: rotate(90deg) scale(1); }
+.ft-g .holo-icon { width: 40px; height: 40px; }
+.ft-g .wisewolf-seal { flex-direction: column; gap: 6px; }
+.ft-g .wisewolf-text { transform: translateY(-6px); font-size: .95rem; }
+
+/* З: ОБЪЕКТИВ */
+.ft-lens { position: relative; width: 132px; height: 132px; display: grid; place-items: center; }
+.ft-lens-ring { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--text-muted); transition: transform 1.4s cubic-bezier(.16,1,.3,1), color .4s; }
+.ft-lens-ring circle { fill: none; stroke: currentColor; stroke-width: .8; opacity: .5; }
+.ft-lens-ticks line { stroke: currentColor; stroke-width: .8; }
+.ft-lens-nums text { fill: currentColor; stroke: none; font: 600 6px var(--font-ui); text-anchor: middle; dominant-baseline: middle; }
+.ft-lens:hover .ft-lens-ring { transform: rotate(80deg); color: var(--accent-wheat); }
+.ft-h .holo-icon { width: 38px; height: 38px; }
+.ft-h .wisewolf-text { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ft-sign span { clip-path: none; } .ft-flourish { stroke-dashoffset: 0; }
+  .ft-af::before { opacity: 1; transform: none; } .ft-print { opacity: .5; transform: rotate(90deg); }
+}
+
+/* ================= И…М: игры со следами ================= */
+.ft-i, .ft-j, .ft-k { overflow: clip; }
+.ft-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.ft-i .ft-center, .ft-j .ft-center, .ft-k .ft-center { position: relative; z-index: 1; }
+.ft-i .ft-legal, .ft-j .ft-legal, .ft-k .ft-legal, .ft-l .ft-legal { justify-content: center; }
+.ft-i .wisewolf-seal, .ft-j .wisewolf-seal, .ft-k .wisewolf-seal { flex-direction: column; gap: 6px; }
+.ft-i .holo-icon, .ft-j .holo-icon, .ft-k .holo-icon { width: 40px; height: 40px; }
+.ft-i .wisewolf-text, .ft-j .wisewolf-text, .ft-k .wisewolf-text { transform: translateY(-6px); font-size: .95rem; }
+@media (max-width: 900px) { .ft-i .ft-center, .ft-j .ft-center, .ft-k .ft-center { padding-bottom: 76px; } }
+.ft-pr { position: absolute; color: var(--accent-wheat); opacity: 0; transform: rotate(var(--ang)) scale(.5); transition: opacity .35s, transform .35s cubic-bezier(.34,1.6,.64,1); }
+.ft-pr.is-on { opacity: var(--op); transform: rotate(var(--ang)) scale(1); }
+.ft-pr.is-off { opacity: 0; transition: opacity .9s; }
+.ft .ft-pr svg, .ft .ft-mini-pr svg { display: block; width: 100%; height: 100%; fill: currentColor; stroke: none; }
+/* И: волк «оживает», когда тропа дошла */
+.ft-i.is-arrived .wisewolf-seal { color: var(--accent-wheat); }
+.ft-i.is-arrived .holo-icon { animation: ft-hop .6s cubic-bezier(.34,1.6,.64,1); }
+.ft-i.is-arrived .tail { animation: wag .4s 4 alternate ease-in-out; transform-origin: 70px 80px; }
+@keyframes ft-hop { 40% { transform: translateY(-8px); } }
+.ft-j { cursor: default; }
+
+/* М: МИНИМАЛ */
+.ft-mini { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 34px 0 26px; text-align: center; }
+.ft-mini-top { display: flex; align-items: center; gap: 6px; }
+.ft-mini-trail { display: flex; gap: 6px; transform: translateY(2px); }
+.ft-mini-pr { width: 15px; height: 15px; color: var(--accent-wheat); opacity: 0; transform: rotate(90deg) translateY(4px);
+  transition: opacity .4s, transform .4s; transition-delay: calc(var(--i) * .3s); }
+.ft-mini-pr:nth-child(even) { margin-top: 8px; }
+.ft-l.is-in .ft-mini-pr { opacity: calc(.3 + var(--i) * .2); transform: rotate(90deg); }
+.ft-l .wisewolf-text { display: none; }
+.ft-l .holo-icon { width: 28px; height: 28px; }
+.ft-mini-top { gap: 10px; }
+.ft-mini-row { display: flex; align-items: center; gap: 18px; }
+.ft-mini-name { font: 400 1.25rem var(--font-heading); color: var(--text-main); transition: color .3s; }
+.ft-mini-name:hover { color: var(--accent-wheat); }
+.ft-mini-soc { display: flex; gap: 14px; padding-left: 18px; border-left: 1px solid var(--border-color); }
+.ft-mini-soc a { color: var(--text-muted); transition: color .3s; }
+.ft-mini-soc a:hover { color: var(--accent-wheat); }
+.ft-mini-soc .ft-ico { width: 16px; height: 16px; }
+.ft-l .ft-legal { gap: 6px 16px; }
+@media (max-width: 900px) { .ft-mini { padding-bottom: 76px; } }
+@media (prefers-reduced-motion: reduce) { .ft-mini-pr { opacity: .5; transform: rotate(90deg); } }
+
+/* ================= Н: И + К + Л по кругу ================= */
+.ft-m { overflow: clip; }
+.ft-m .ft-center { position: relative; z-index: 1; padding-bottom: 34px; }
+.ft-m .ft-legal { justify-content: center; }
+.ft-m .wisewolf-seal { flex-direction: column; gap: 6px; border-radius: 12px; padding: 4px 10px; outline-offset: 4px; }
+.ft-m .holo-icon { width: 40px; height: 40px; transition: filter .5s, color .5s; }
+.ft-m .wisewolf-text { transform: translateY(-6px); font-size: .95rem; white-space: nowrap; }
+/* надпись — только когда волчица «наблюдает» (режим за курсором), наведение её больше не показывает */
+.ft-m .wisewolf-seal:hover .wisewolf-text { opacity: 0; transform: translateY(-6px); }
+.ft-m.is-watching .wisewolf-text, .ft-m.is-watching .wisewolf-seal:hover .wisewolf-text { opacity: 1; transform: none; color: var(--accent-wheat); }
+/* дошла — волк загорается и подпрыгивает; пока ждёт первого нажатия — мягко «дышит» */
+.ft-m.is-arrived .wisewolf-seal { color: var(--accent-wheat); }
+.ft-m.is-arrived .holo-icon { filter: drop-shadow(0 0 10px rgba(230,179,34,.55)); animation: ft-hop .6s cubic-bezier(.34,1.6,.64,1); }
+.ft-m.is-arrived .tail { animation: wag .4s 4 alternate ease-in-out; transform-origin: 70px 80px; }
+.ft-m[data-mode="idle"] .holo-icon { animation: ft-hop .6s cubic-bezier(.34,1.6,.64,1), ft-glow 2.4s 1s ease-in-out infinite; }
+@keyframes ft-glow { 50% { filter: drop-shadow(0 0 3px rgba(230,179,34,.2)); } }
+.ft-m[data-mode="cursor"] { cursor: default; }
+@media (max-width: 900px) { .ft-m .ft-center { padding-bottom: 76px; } }

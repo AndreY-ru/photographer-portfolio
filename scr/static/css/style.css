@@ -1,0 +1,1349 @@
+:root{
+    --base-bg: #080808;
+    --text-main: #eae6dc;
+    --text-muted: #666666;
+    --accent-wheat: #e6b322;
+    --grid-color: rgba(234, 230, 220, 0.06); 
+    --focus-color: rgba(234, 230, 220, 0.25);
+    --font-heading: 'Cormorant Garamond', serif;
+    --font-ui: 'Manrope', sans-serif;
+    --dynamic-bg: var(--base-bg);
+
+    /* --photo-ink / --photo-ink-muted / --photo-shadow — цвет текста, который
+       лежит поверх ФОТО с тёмной шторкой (карточки галереи, шапка альбома,
+       герой на главной по умолчанию). Эти шторки всегда тёмные независимо
+       от выбранной темы сайта (диск диафрагмы влияет только на var(--text-main)
+       и фон страницы), поэтому и текст поверх них должен оставаться светлым
+       всегда — специально НЕ переопределяется внутри [data-theme="..."] ниже,
+       в отличие от --text-main. Если для конкретного фото нужен обратный
+       (тёмный) текст — это уже отдельная, более точная адаптация по реальной
+       яркости фото (см. .is-light-bottom/.is-light-top у .showcase-display). */
+    --photo-ink: #eae6dc;
+    --photo-ink-muted: #b8b4ac;
+    --photo-shadow: rgba(0, 0, 0, 0.65);
+}
+:root,
+[data-theme="dark"] {
+    --base-bg: #080808;
+    --text-main: #eae6dc;
+    --text-muted: #666666;
+    --grid-color: rgba(234, 230, 220, 0.06);
+    --focus-color: rgba(234, 230, 220, 0.25);
+    --cursor-base: #ffffff;
+    --cursor-ring-base: rgba(0, 0, 0, 0.55); /* контрастная обводка курсора */
+    --border-color: rgba(255, 255, 255, 0.06);
+    --hover-tint: rgba(255, 255, 255, 0.025);
+    --theme-hud-ink: rgba(234, 230, 220, 0.4);
+}
+[data-theme="gray"] {
+    --base-bg: #4a4842;
+    --text-main: #f5f3ee;
+    --text-muted: #c2beb5;
+    --grid-color: rgba(20, 18, 14, 0.08);
+    --focus-color: rgba(20, 18, 14, 0.3);
+    --cursor-base: #141210;
+    --cursor-ring-base: rgba(255, 255, 255, 0.7);
+    --border-color: rgba(20, 18, 14, 0.12);
+    --hover-tint: rgba(20, 18, 14, 0.05);
+    --theme-hud-ink: rgba(245, 243, 238, 0.55);
+}
+[data-theme="light"] {
+    --base-bg: #f3f1ec;
+    --text-main: #141210;
+    --text-muted: #706b60;
+    --grid-color: rgba(20, 18, 14, 0.08);
+    --focus-color: rgba(20, 18, 14, 0.3);
+    --cursor-base: #141210;
+    --cursor-ring-base: rgba(255, 255, 255, 0.7);
+    --border-color: rgba(20, 18, 14, 0.1);
+    --hover-tint: rgba(20, 18, 14, 0.04);
+    --theme-hud-ink: rgba(20, 18, 14, 0.55);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Прячем системный курсор — рамка автофокуса и точка в её центре
+   (ниже) теперь и есть курсор. Только для мыши/трекпада: тач ничего
+   не должен терять, и .viewfinder-ui сам скрыт на мобилке ниже. */
+/* Прячем системный курсор ТОЛЬКО на главной странице (где есть класс .home-page) */
+@media (pointer: fine) {
+    body.home-page, 
+    body.home-page *, 
+    body.home-page *::before, 
+    body.home-page *::after { 
+        cursor: none !important; 
+    }
+}
+
+body {
+    background-color: var(--dynamic-bg);
+    color: var(--text-main); font-family: var(--font-ui);
+    min-height: 100vh; /* раньше было height:100vh + overflow:hidden — теперь
+    страница нормально скроллится, а видоискатель остаётся fixed поверх неё */
+    display: flex; flex-direction: column;
+    transition: background-color 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.grain-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 10600; opacity: 0.02; 
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    transition: opacity 0.5s ease, background-size 0.5s ease;
+}
+
+.temp-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10700; /* выше зерна (10600) и видоискателя (10500) — фильтр должен красить и их тоже */
+    pointer-events: none;
+    background-color: transparent;
+    transition: background-color 0.6s ease;
+}
+/* mix-blend-mode — только когда фильтр реально включён. Полноэкранный слой
+   с режимом наложения заставляет браузер пересмешивать ВЕСЬ экран на
+   каждое изменение под ним (а на главной каждый кадр двигаются сетка и
+   курсор) — даже когда сам слой прозрачный (5600K, по умолчанию). */
+.temp-overlay[data-temp="3200"] { background-color: rgba(80, 130, 255, 0.12); mix-blend-mode: overlay; }
+.temp-overlay[data-temp="5600"] { background-color: transparent; }
+/* Пока фильтр выключен (5600K) — слоя нет вовсе: даже прозрачный, он висел
+   отдельным полноэкранным слоем, который видеокарта смешивала каждый кадр.
+   Без атрибута (до первого переключения) — тоже 5600K. */
+.temp-overlay:not([data-temp]), .temp-overlay[data-temp="5600"] { display: none; }
+.temp-overlay[data-temp="7000"] { background-color: rgba(255, 170, 60, 0.12); mix-blend-mode: overlay; }
+
+/* Прелоадер — типографический морфинг: вертикальная надпись проявляется
+   из темноты, потом смазывается движением. Сама сетка видоискателя стоит
+   z-index'ом ВЫШЕ прелоадера (см. .viewfinder-ui ниже), поэтому линии
+   рисуются прямо на его чёрном фоне по очереди — без отдельной
+   "линии-двойника" и без рассинхрона при исчезновении фона. */
+.preloader {
+    position: fixed; inset: 0; z-index: 10000;
+    background: var(--base-bg);
+    transition: opacity 0.7s ease;
+}
+.preloader.is-hidden { opacity: 0; pointer-events: none; }
+
+.preloader-type {
+    position: absolute; top: 50%; left: 33.33%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 1.3s ease;
+}
+.preloader-type.is-visible { opacity: 1; }
+/* Смазывание движением: блюр + резкое схлопывание по горизонтали —
+   в это же мгновение JS запускает рождение vf-v-left на этом же месте */
+.preloader-type.is-collapsing {
+    opacity: 0;
+    filter: blur(18px);
+    transform: translate(-50%, -50%) scaleX(0.02);
+    transition: opacity 0.5s ease-in 0.1s, filter 0.45s ease-in, transform 0.5s cubic-bezier(0.7, 0, 1, 1);
+}
+.preloader-type__text {
+    writing-mode: vertical-rl; text-orientation: upright;
+    font-family: var(--font-heading); font-style: italic; font-weight: 400;
+    
+    /* МАГИЯ ЗДЕСЬ: размер зависит от высоты экрана (vh), а не ширины */
+    font-size: clamp(0.7rem, 2.2vh, 1.5rem);
+    letter-spacing: 0.1em; /* Чуть уплотнили буквы */
+    
+    color: var(--text-main); white-space: nowrap;
+}
+
+/* Согласованное появление интерфейса сразу после прелоадера — снимаем
+   .fade-in с body из JS, всё разом мягко всплывает */
+body.fade-in .header-wrap, body.fade-in .showcase-page, body.fade-in .services, body.fade-in .retouch, body.fade-in .footer { opacity: 0; transform: translateY(16px); }
+body.fade-in .bg-typography { opacity: 0; }
+.header-wrap { transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.05s, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.05s; }
+.showcase-page { transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s; }
+.services, .retouch { transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s; }
+.footer { transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.25s, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.25s; }
+
+.bg-typography {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1);
+    font-family: var(--font-heading); font-size: 25vw; font-weight: 600;
+    color: color-mix(in srgb, var(--text-main) 1.5%, transparent); pointer-events: none; z-index: 0;
+    white-space: nowrap; user-select: none;
+    opacity: 1; transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* На время смены слова текст ныряет почти в невидимость и слегка
+   уменьшается — сам текст меняется в JS в нижней точке нырка */
+.bg-typography.is-switching {
+    opacity: 0; transform: translate(-50%, -50%) scale(0.92);
+}
+
+/* =========================================
+   VIEWFINDER UI
+========================================= */
+.viewfinder-ui {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 10500;
+}
+
+.vf-grid-line { position: absolute; background-color: var(--grid-color); opacity: 0; }
+/* v-left "рождается" из смазанного текста прелоадера — включается JS
+   в тот же момент, что и .preloader-type.is-collapsing, пружинным доводом */
+.vf-v-left {
+    left: 33.33%; top: 0; width: 1px; height: 100%;
+    transform: scaleY(0);
+    transition: opacity 0.35s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.vf-line-seeded .vf-v-left { opacity: 1; transform: scale(1); }
+
+/* Остальные три разворачиваются следом по периметру — верх, право, низ —
+   пока прелоадер ещё чёрный: .vf-grid-unfolded включает JS чуть позже */
+.vf-h-top {
+    top: 33.33%; left: 0; width: 100%; height: 1px;
+    transform: scaleX(0);
+    transition: opacity 0.5s ease 0.1s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s;
+}
+.vf-v-right {
+    left: 66.66%; top: 0; width: 1px; height: 100%;
+    transform: scaleY(0);
+    transition: opacity 0.5s ease 0.2s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+.vf-h-bottom {
+    top: 66.66%; left: 0; width: 100%; height: 1px;
+    transform: scaleX(0);
+    transition: opacity 0.5s ease 0.3s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+}
+.vf-grid-unfolded .vf-h-top, .vf-grid-unfolded .vf-v-right, .vf-grid-unfolded .vf-h-bottom { opacity: 1; transform: scale(1); }
+
+/* =========================================
+   РАМКА АВТОФОКУСА (ИНВЕРСИОННЫЙ КУРСОР)
+========================================= */
+.vf-focus-group {
+    /* Отдельный слой поверх всего, что может открыться на главной
+       (модалка "Связаться" — 10650), но под фильтром температуры (10700 —
+       он должен красить и курсор). Раньше рамка жила внутри
+       .viewfinder-ui (10500) и пряталась под модалкой. */
+    position: fixed; top: 0; left: 0; z-index: 10690; pointer-events: none;
+    width: 200px; height: 120px;
+    transform: translate(-50%, -50%); will-change: transform;
+    transition: width 0.3s ease, height 0.3s ease, opacity 1s ease 0.5s;
+
+    /* Цвет курсора — JS переключает через .is-on-light, когда под ним
+       светлый участок обложки (см. script.js: buildCursorLuminanceGrid).
+       Раньше тут стоял mix-blend-mode: difference — идея была та же
+       (авто-контраст без JS), но не работала: .viewfinder-ui сидит на
+       position:fixed + z-index, а это само по себе создаёт отдельный
+       стекинг-контекст, и blend-режим физически не видит фото, которое
+       рисуется совсем в другой ветке DOM. */
+    --cursor-color: var(--cursor-base);
+    /* Обводка противоположного цвета — чтобы курсор не терялся ни на
+       светлом, ни на тёмном фоне (на ноутбуках с ярким экраном тонкая
+       полупрозрачная рамка без неё пропадала из виду). */
+    --cursor-ring: var(--cursor-ring-base);
+}
+/* is-over-photo = под курсором реально есть фото (тёмный или светлый участок —
+   неважно, лишь бы не "нет данных"). Без него на светлой/серой теме дефолтный
+   --cursor-base уже тёмный, и разница с .is-on-light пропадала. */
+.vf-focus-group.is-over-photo { --cursor-color: #ffffff; --cursor-ring: rgba(0, 0, 0, 0.55); }
+.vf-focus-group.is-over-photo.is-on-light { --cursor-color: #141414; --cursor-ring: rgba(255, 255, 255, 0.7); }
+
+.bracket { 
+    position: absolute; width: 15px; height: 15px; 
+    border-color: var(--cursor-color); border-style: solid; 
+    opacity: 0.6; /* В покое приглушённо (было 0.35 — на ноутбуках терялось) */
+    filter: drop-shadow(0 0 1px var(--cursor-ring));
+    transition: opacity 0.3s ease, border-color 0.3s ease; 
+}
+.vf-focus-group.focused { width: 140px; height: 80px; }
+.vf-focus-group.focused .bracket { opacity: 0.9; } /* Ярко при наведении — этой строчки не было вообще */
+.vf-focus-group.focused .center-dot { width: 7px; height: 7px; } /* Чуть крупнее при наведении */
+
+.top-left { top: 0; left: 0; border-width: 1px 0 0 1px; }
+.top-right { top: 0; right: 0; border-width: 1px 1px 0 0; }
+.bottom-left { bottom: 0; left: 0; border-width: 0 0 1px 1px; }
+.bottom-right { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+/* Точка — сам "указатель": JS ставит её ровно под мышью (своим transform),
+   а рамка вокруг плавно догоняет. */
+.center-dot {
+    position: absolute; top: 50%; left: 50%; width: 5px; height: 5px; will-change: transform;
+    background: var(--cursor-color); opacity: 1;
+    box-shadow: 0 0 0 1px var(--cursor-ring);
+    transform: translate(-50%, -50%); border-radius: 50%; 
+    transition: opacity 0.3s ease, width 0.3s ease, height 0.3s ease, background-color 0.3s ease; 
+}
+
+/* .vf-data (старые угловые бейджи REC/ISO/F/Temp) убран целиком — данные
+   камеры теперь живут в карточке .vf-island рядом с лого (см. ниже, у
+   .header). Крестик фокуса (.vf-focus-group, только на главной) не трогали —
+   это отдельная штука, к бейджам отношения не имеет. */
+body.fade-in .vf-focus-group { opacity: 0; }
+
+/* Статичные уголки видоискателя для мобильной ширины — замена курсорной
+   рамке (.vf-focus-group), которая на тач-экране не имеет смысла (курсора
+   нет). Скрыты по умолчанию, показываются только в мобильной медиа-запросе
+   в конце файла — там же прячутся сетка линий и курсорная рамка. */
+.vf-corners { display: none; }
+.vf-corner {
+    position: fixed; width: 22px; height: 22px;
+    border-color: var(--cursor-base); border-style: solid; opacity: 0.35;
+}
+.vf-corner--tl { top: 14px; left: 14px; border-width: 1px 0 0 1px; }
+.vf-corner--tr { top: 14px; right: 14px; border-width: 1px 1px 0 0; }
+.vf-corner--bl { bottom: 14px; left: 14px; border-width: 0 0 1px 1px; }
+.vf-corner--br { bottom: 14px; right: 14px; border-width: 0 1px 1px 0; }
+
+/* REC/ISO/F/Температура переехали в карточку рядом с лого (см. .vf-island
+   ниже, у .header) — старое позиционирование по углам (.data-tl/tr/bl/br,
+   --hud-inset-x/y) больше не используется и убрано. */
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+
+.vf-dial {
+    background: none;
+    border: none;
+    font: inherit;
+    padding: 0;
+    pointer-events: auto; /* обязательно: .viewfinder-ui сам на pointer-events:none */
+}
+.vf-dial:active { opacity: 0.6; } /* лёгкая тактильная отдача на клик */
+/* =========================================
+   ОСНОВНОЙ КАРКАС И МЕНЮ
+========================================= */
+/* Просто оборачивает <header>, чтобы плавно появляться при загрузке разом
+   с ней (см. body.fade-in ниже) — больше ни для чего не нужен. Раньше тут
+   ещё был расчёт на position:relative под .vf-island (карточка была его
+   потомком), но карточка теперь отдельный элемент вне этой обёртки, со
+   своим position:fixed (см. комментарий у .vf-island ниже) — так что
+   position тут больше не требуется. */
+.header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 26px 5vw; z-index: 20; position: sticky; top: 0;
+    background: color-mix(in srgb, var(--base-bg) 50%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+}
+.logo-block { display: flex; flex-direction: column; gap: 2px; }
+.logo { font-family: var(--font-heading); font-size: 1.5rem; text-decoration: none; color: var(--text-main); transition: color 0.4s; }
+.logo:hover { color: var(--accent-wheat); }
+/* Подзаголовок под именем — заполняет только index.html (см.
+   {% block logo_subtitle %} в base.html), поэтому на остальных страницах
+   элемента просто нет в DOM и это правило их не касается. Раньше был виден
+   только в мобильном медиа-запросе (шапка-поверх-фото на главной) — теперь
+   показываем всегда, чтобы "Фотограф" был и в десктопной шапке тоже. */
+.logo-subtitle {
+    display: block; font-family: var(--font-ui); font-size: 0.62rem; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted);
+}
+.nav { display: flex; align-items: center; gap: 30px; }
+.nav__link { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); text-decoration: none; transition: color 0.4s; }
+.nav__link:hover, .nav__link.active { color: var(--text-main); }
+
+/* Кнопка "Связаться" в десктопной шапке — открывает модалку (см.
+   .contact-modal ниже и её JS в script.js), а не просто ссылку на
+   "Обо мне". Выделена отдельным контурным акцентом, а не обычной
+   .nav__link, чтобы читалась как призыв к действию, а не как пункт
+   навигации — и была видна на любой странице, включая альбомы, где своего
+   блока контактов нет. */
+
+/* Бургер + полноэкранное меню — видны только на мобильной ширине (см.
+   финальную медиа-запрос ниже), на десктопе .nav из трёх ссылок никуда
+   не делась. Бургер — снарочно вне .header-wrap, той же причине, что и
+   .vf-island (см. коммент там): у .header свой контекст наложения, и
+   кнопка внутри него не смогла бы оказаться поверх открытой .mobile-nav. */
+.burger {
+    display: none; position: fixed; top: 24px; right: 5vw; z-index: 10800;
+    flex-direction: column; justify-content: center; align-items: center; gap: 5px;
+    width: 36px; height: 36px; padding: 0; background: none; border: none; cursor: pointer;
+}
+.burger__line { display: block; width: 20px; height: 1px; background: var(--text-main); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease; }
+.burger[aria-expanded="true"] .burger__line:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.burger[aria-expanded="true"] .burger__line:nth-child(2) { opacity: 0; }
+.burger[aria-expanded="true"] .burger__line:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+.mobile-nav {
+    display: none; position: fixed; inset: 0; z-index: 10550;
+    flex-direction: column; align-items: flex-start; justify-content: center; gap: 6vh;
+    padding: 0 8vw;
+    background: color-mix(in srgb, var(--base-bg) 96%, transparent);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.5s;
+}
+.mobile-nav.is-open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+.mobile-nav__link {
+    font-family: var(--font-heading); font-style: italic; font-weight: 400;
+    font-size: clamp(2rem, 9vw, 2.8rem); color: var(--text-main); text-decoration: none;
+    opacity: 0; transform: translateY(14px);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+}
+.mobile-nav.is-open .mobile-nav__link { opacity: 1; transform: translateY(0); }
+.mobile-nav__link.active { color: var(--accent-wheat); }
+.mobile-nav.is-open .mobile-nav__link:nth-child(1) { transition-delay: 0.06s; }
+.mobile-nav.is-open .mobile-nav__link:nth-child(2) { transition-delay: 0.13s; }
+.mobile-nav.is-open .mobile-nav__link:nth-child(3) { transition-delay: 0.2s; }
+
+/* Плавающая кнопка "Связаться" — только мобильная ширина, ведёт на
+   блок контактов "Обо мне" (#contact). На десктопе там и так есть блок
+   контактов в обычном потоке страницы, дублировать кнопкой незачем.
+   Раньше была широкой заливной плашкой почти на всю ширину экрана —
+   теперь маленькая контурная "таблетка" в углу (по образцу референса). */
+.mobile-cta {
+    display: none; position: fixed; left: auto; right: 16px; bottom: 16px; z-index: 10550;
+    align-items: center; justify-content: center; gap: 7px;
+    height: 38px; padding: 0 16px; border-radius: 19px;
+    background: rgba(8, 8, 8, 0.55); backdrop-filter: blur(6px);
+    border: 1px solid var(--accent-wheat); color: var(--accent-wheat);
+    font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.07em; text-decoration: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    transition: opacity 0.3s ease;
+}
+.mobile-cta svg {
+    width: 13px; height: 13px; stroke: var(--accent-wheat); fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+.mobile-nav.is-open ~ .mobile-cta { opacity: 0; pointer-events: none; }
+
+/* =========================================
+   КНОПКА «СВЯЗАТЬСЯ» НА ПК (.cta-dock, base.html; логика — script.js)
+   Выбрана владельцем по прототипу (prototypes/contact-button, «И»): язычок с
+   лапкой у правого края; при нажатии выезжает шторка с контактами, язычок
+   едет вместе с ней, как ручка. Открыта — .is-open. На телефоне скрыта
+   (там .mobile-cta).
+========================================= */
+.cta-dock { display: none; }
+@media (min-width: 769px) {
+    .cta-dock {
+        position: fixed; z-index: 10550; right: 0; top: 50%; display: flex; align-items: center; font-family: var(--font-ui);
+        transform: translate(300px, -50%); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .cta-dock.is-open { transform: translate(0, -50%); }
+    .cta-dock svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .cta-dock__toggle {
+        order: -1; display: flex; align-items: center; gap: 12px; padding: 16px 11px 20px; border: 0; border-radius: 10px 0 0 10px; cursor: pointer;
+        writing-mode: vertical-rl; background: var(--accent-wheat); color: #141210;
+        font: 700 0.74rem var(--font-ui); letter-spacing: 0.16em; text-transform: uppercase;
+        box-shadow: -6px 0 24px rgba(0, 0, 0, 0.35); transition: padding 0.3s;
+    }
+    .cta-dock__toggle:hover { padding-right: 15px; }
+    .cta-dock .cta-dock__paw { width: 20px; height: 20px; fill: currentColor; stroke: none; transform-origin: 50% 80%; }
+    .cta-dock__toggle:hover .cta-dock__paw { animation: cta-paw-wave 0.6s ease-in-out 2; }
+    .cta-dock__panel {
+        box-sizing: border-box; width: 300px; padding: 20px 16px 14px; background: color-mix(in srgb, var(--base-bg) 94%, #fff 4%);
+        border: 1px solid var(--border-color); border-right: 0; border-radius: 14px 0 0 14px; box-shadow: -20px 0 50px rgba(0, 0, 0, 0.5);
+    }
+    /* закрытая шторка за краем экрана — недоступна и с клавиатуры */
+    .cta-dock:not(.is-open) .cta-dock__panel { visibility: hidden; transition: visibility 0s linear 0.5s; }
+    .cta-dock__title { margin: 0 4px 2px; font: italic 400 1.3rem var(--font-heading); color: var(--text-main); }
+    .cta-dock__sub { margin: 0 4px 10px; font-size: 0.78rem; color: var(--text-muted); }
+    .cta-dock__row { display: flex; align-items: center; gap: 12px; padding: 11px 10px; border-radius: 9px; color: var(--text-main); text-decoration: none; transition: background-color 0.2s, color 0.2s; }
+    .cta-dock__row:hover { background: color-mix(in srgb, var(--accent-wheat) 10%, transparent); color: var(--accent-wheat); }
+    .cta-dock__icon { flex: none; width: 20px; height: 20px; background: currentColor;
+        -webkit-mask: var(--icon-url) center / contain no-repeat; mask: var(--icon-url) center / contain no-repeat; }
+    .cta-dock__text { display: flex; flex-direction: column; gap: 2px; }
+    .cta-dock__text b { font-size: 0.86rem; font-weight: 600; }
+    .cta-dock__text small { font-size: 0.72rem; color: var(--text-muted); }
+    .cta-dock__more { display: block; margin-top: 6px; padding: 10px; border-top: 1px solid var(--border-color); color: var(--text-muted); text-decoration: none; font-size: 0.74rem; letter-spacing: 0.06em; }
+    .cta-dock__more:hover { color: var(--accent-wheat); }
+}
+@keyframes cta-paw-wave { 25% { transform: rotate(-18deg); } 75% { transform: rotate(14deg); } }
+
+/* =========================================
+   МОДАЛКА "СВЯЗАТЬСЯ"
+   Общая для всех триггеров с [data-contact-trigger]: плавающая кнопка
+   на мобильной ширине (.mobile-cta). На ПК своя панель у кнопки (.cta-dock),
+   окно остаётся для [data-contact-trigger]. На десктопе — центрированная карточка, на мобильной
+   ширине превращается в шторку снизу (см. медиа-запрос в конце файла).
+   Открытие/закрытие — script.js, секция "МОДАЛКА СВЯЗАТЬСЯ".
+========================================= */
+.contact-modal {
+    position: fixed; inset: 0; z-index: 10650;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.35s ease, visibility 0s linear 0.35s;
+}
+.contact-modal.is-open {
+    opacity: 1; visibility: visible; pointer-events: auto;
+    transition: opacity 0.35s ease;
+}
+.contact-modal__backdrop {
+    position: absolute; inset: 0;
+    background: rgba(4, 4, 4, 0.72);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.contact-modal__sheet {
+    position: relative; width: min(420px, 100%); max-height: 84vh; overflow-y: auto;
+    background: color-mix(in srgb, var(--base-bg) 94%, #fff 6%);
+    border: 1px solid var(--border-color); border-radius: 20px;
+    padding: 30px 26px 26px;
+    transform: translateY(18px) scale(0.97); opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+.contact-modal.is-open .contact-modal__sheet { transform: translateY(0) scale(1); opacity: 1; }
+.contact-modal__handle { display: none; } /* только мобильная шторка, см. медиа-запрос */
+
+.contact-modal__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.contact-modal__title { font-family: var(--font-heading); font-weight: 600; font-size: 2rem; color: var(--text-main); }
+.contact-modal__close {
+    flex-shrink: 0; width: 34px; height: 34px; margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+.contact-modal__close:hover { color: var(--text-main); transform: rotate(90deg); }
+.contact-modal__close svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.6px; }
+
+.contact-modal__desc { margin-top: 10px; font-size: 0.9rem; line-height: 1.55; color: var(--text-muted); }
+
+.contact-modal__list { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+
+.contact-modal__item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 14px; border-radius: 14px;
+    border: 1px solid var(--border-color); background: var(--hover-tint);
+    text-decoration: none; color: inherit;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+}
+.contact-modal__item:hover { border-color: var(--accent-wheat); transform: translateX(3px); }
+
+.contact-modal__icon {
+    flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    border: 1px solid var(--border-color); color: var(--text-main);
+    background: color-mix(in srgb, var(--base-bg) 60%, transparent);
+}
+.contact-modal__icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.6px; }
+/* Иконки соцсетей и телефона — картинка (svg/png, путь берётся из БД, см.
+   media_url(s.icon) в base.html) НЕ вставлена в разметку напрямую, а
+   используется как CSS-маска: background-color красится в currentColor,
+   а mask-image вырезает по ней форму иконки. Так адаптируется под тему
+   ЛЮБОЙ файл, каким бы цветом он ни был залит внутри — потому что маска
+   смотрит только на альфа-канал/форму, а не на исходные цвета пикселей.
+   img/<svg> так не умеют: даже currentColor ВНУТРИ svg-файла не подхватит
+   цвет страницы, если файл подключён через <img src="...">, а не вставлен
+   как инлайн-разметка — у него своя, изолированная область стилей. */
+.contact-modal__icon-glyph {
+    display: block; width: 18px; height: 18px; background-color: currentColor;
+    mask-image: var(--icon-url); mask-size: contain; mask-repeat: no-repeat; mask-position: center;
+    -webkit-mask-image: var(--icon-url); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
+}
+.contact-modal__icon--plus { color: var(--accent-wheat); border-color: color-mix(in srgb, var(--accent-wheat) 45%, transparent); }
+
+.contact-modal__text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.contact-modal__name { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
+.contact-modal__hint { font-size: 0.78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.contact-modal__chevron {
+    flex-shrink: 0; width: 16px; height: 16px;
+    stroke: var(--text-muted); fill: none; stroke-width: 1.6px;
+    transition: transform 0.3s ease, stroke 0.3s ease;
+}
+.contact-modal__item:hover .contact-modal__chevron,
+.contact-modal__more:hover .contact-modal__chevron { transform: translateX(3px); stroke: var(--accent-wheat); }
+
+.contact-modal__more {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border-color);
+    text-decoration: none; color: inherit;
+}
+.contact-modal__more .contact-modal__name { flex: 1; font-weight: 500; }
+
+/* =========================================
+   УСЛОВИЯ ИСПОЛЬЗОВАНИЯ ФОТО (_usage_terms.html)
+   Один и тот же текст в двух местах: окно перед первым скачиванием в
+   альбоме (album.html) и блок на странице "Обо мне" (about.html).
+========================================= */
+.usage-terms { color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; }
+.usage-terms__lead { margin-top: 12px; color: var(--text-main); }
+.usage-terms__subtitle { margin-top: 16px; color: var(--text-main); font-weight: 600; }
+.usage-terms__list { margin-top: 8px; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.usage-terms__list li { position: relative; padding-left: 18px; }
+.usage-terms__list li::before {
+    content: ''; position: absolute; left: 2px; top: 0.65em;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--accent-wheat);
+}
+.usage-terms__note {
+    margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-color);
+    font-size: 0.78rem;
+}
+
+/* =========================================
+   СОГЛАСИЕ НА ОБРАБОТКУ ПД (152-ФЗ)
+   .pd-consent — чекбокс со ссылкой на /privacy. По закону нужен в КАЖДОЙ
+   форме, где человек вводит свои данные: добавляете новую форму — берите
+   эту же разметку (пример — окно "Как вас зовут?" в album.html).
+========================================= */
+.pd-consent {
+    display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+    font-size: 0.78rem; line-height: 1.5; color: var(--text-muted);
+}
+.pd-consent input {
+    flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px;
+    accent-color: var(--accent-wheat); cursor: pointer;
+}
+.pd-consent a { color: var(--text-main); text-decoration: underline; text-underline-offset: 2px; }
+.pd-consent a:hover { color: var(--accent-wheat); }
+
+/* Форма в окне "Как вас зовут?" (album.html) */
+.client-info-form { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
+.client-info-form .site-notice__btn { margin-top: 4px; }
+.client-info-form__input {
+    width: 100%; padding: 13px 14px; border-radius: 12px;
+    border: 1px solid var(--border-color); background: var(--hover-tint);
+    color: var(--text-main); font-family: var(--font-ui); font-size: 0.95rem;
+    outline: none; transition: border-color 0.3s ease;
+}
+.client-info-form__input:focus { border-color: var(--accent-wheat); }
+.client-info-form__input::placeholder { color: var(--text-muted); }
+
+/* =========================================
+   COOKIE-БАННЕР (base.html, логика — script.js, секция "COOKIE-БАННЕР")
+   z-index ниже видоискателя (10500): на главной системный курсор скрыт,
+   и рамка-курсор должна оставаться поверх баннера. На мобильной ширине
+   курсора нет — там поднимаем баннер над кнопкой "Связаться" (10550).
+========================================= */
+.cookie-banner {
+    position: fixed; left: 16px; bottom: 16px; z-index: 10450;
+    width: min(520px, calc(100vw - 32px));
+    display: flex; align-items: center; gap: 18px;
+    padding: 16px 18px; border-radius: 16px;
+    background: color-mix(in srgb, var(--base-bg) 92%, #fff 8%);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    opacity: 0; transform: translateY(16px);
+    transition: opacity 0.45s ease, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cookie-banner[hidden] { display: none; }
+.cookie-banner.is-visible { opacity: 1; transform: translateY(0); }
+.cookie-banner__text { font-size: 0.75rem; line-height: 1.55; color: var(--text-muted); }
+.cookie-banner__text a { color: var(--text-main); text-decoration: underline; text-underline-offset: 2px; }
+.cookie-banner__text a:hover { color: var(--accent-wheat); }
+.cookie-banner__btn {
+    flex-shrink: 0; padding: 10px 18px; border-radius: 12px; cursor: pointer;
+    border: 1px solid var(--accent-wheat); background: none; color: var(--accent-wheat);
+    font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+.cookie-banner__btn:hover { background: var(--accent-wheat); color: #141210; }
+
+/* =========================================
+   ШЕСТЕРЁНКА + КАРТОЧКА С ДАННЫМИ КАМЕРЫ
+   (REC / ISO / F / Температура, у лого в шапке)
+========================================= */
+.header-left { display: flex; align-items: center; gap: 14px; }
+
+.vf-toggle {
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+    background: none; border: 1px solid var(--border-color);
+    color: var(--text-muted); cursor: pointer;
+    transition: color 0.3s ease, border-color 0.3s ease, background-color 0.3s ease, transform 0.4s ease;
+}
+.vf-toggle svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.6px; }
+.vf-toggle:hover { color: var(--text-main); border-color: var(--text-main); }
+.vf-toggle.is-active { color: var(--accent-wheat); border-color: var(--accent-wheat); background: var(--hover-tint); }
+
+/* Клон шестерёнки для мобильной ширины (рядом с бургером) — сама кнопка
+   в разметке HTML (base.html), стили появления/позиции см. в мобильном
+   медиа-запросе в конце файла. На десктопе не нужна: там обычная
+   .vf-toggle внутри .header-left и так на своём месте. */
+.vf-toggle-mobile { display: none; }
+
+/* .vf-island — НЕ .header-wrap.top:100% (как было), а position:fixed от
+    вьюпорта. Так и надо: .header — position:sticky, при скролле визуально
+    остаётся приклеенной к верху, но .header-wrap (её родитель, обычный
+    position:relative без sticky) при этом продолжает уезжать вместе со
+    страницей. Была бы карточка position:absolute от .header-wrap — при
+    скролле она укатилась бы вместе с ним и пропала из виду, а шапка
+    осталась бы на месте без неё. top считается от --header-h (реальная
+    высота шапки в px, меряется в script.js и кладётся в CSS-переменную на
+    :root — так переживёт перенос лого на 2 строки на узких экранах и любые
+    случайные различия в px между браузерами). z-index — с большим запасом
+    над контентом страниц (.gallery-page: 60, .filter-bar: 70 внутри него),
+    чтобы карточка гарантированно была поверх любых обложек. transform —
+    под лёгкое "плавание" за курсором (см. script.js), задаётся через
+    CSS-переменные, а не пересекается с opacity/scale самой карточки-таблетки
+    ниже (та анимируется отдельным вложенным элементом .vf-island__pill). */
+.vf-island {
+    position: fixed; top: calc(var(--header-h, 83px) + 12px); left: 5vw;
+    z-index: 90; pointer-events: none; /* сам контейнер не мешает кликам мимо карточки */
+    transform: translate(var(--vf-float-x, 0px), var(--vf-float-y, 0px));
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.05s;
+}
+body.fade-in .vf-island { opacity: 0; }
+.vf-island__pill {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px; border-radius: 8px;
+    background: color-mix(in srgb, var(--base-bg) 65%, transparent);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    pointer-events: auto;
+    opacity: 1; transform: translateY(0) scale(1);
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+}
+.vf-island__item {
+    font-family: var(--font-ui); font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-main);
+    background: none; border: none; padding: 0; cursor: default; white-space: nowrap;
+}
+.vf-island__item span { font-weight: 300; opacity: 0.7; font-variant-numeric: tabular-nums; }
+button.vf-island__item { cursor: pointer; }
+button.vf-island__item:hover { color: var(--accent-wheat); }
+button.vf-island__item:active { opacity: 0.6; }
+/* Иконки у ISO/диафрагмы/температуры — часть мобильной вертикальной
+   раскладки (см. медиа-запрос ниже). На десктопе в компактной
+   горизонтальной таблетке им не место, там как и раньше только текст. */
+.vf-island__icon { display: none; }
+
+.vf-island__rec::before {
+    content: ''; display: inline-block; width: 6px; height: 6px;
+    background: #cc2222; border-radius: 50%; margin-right: 8px;
+    vertical-align: middle; margin-bottom: 2px; animation: blink 2s infinite ease-in-out;
+}
+
+.vf-island__divider { width: 1px; height: 12px; background: var(--border-color); flex-shrink: 0; }
+
+.vf-island__collapse {
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    padding: 2px; margin-left: 2px; transition: color 0.3s ease, transform 0.3s ease;
+}
+.vf-island__collapse svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8px; }
+.vf-island__collapse:hover { color: var(--text-main); }
+
+/* Свёрнутое состояние — переключается JS-ом (.vf-island.is-collapsed).
+   html.vf-island-precollapsed — тот же результат, но выставленный ДО
+   отрисовки инлайн-скриптом в <head> (см. base.html), пока script.js ещё
+   не загрузился — без transition, чтобы не было анимации-мигания на
+   самом первом кадре. script.js снимает этот класс с <html> сразу же,
+   как только сам берёт управление состоянием карточки. */
+.vf-island.is-collapsed .vf-island__pill,
+html.vf-island-precollapsed .vf-island__pill {
+    opacity: 0; transform: translateY(-6px) scale(0.98);
+    pointer-events: none;
+}
+html.vf-island-precollapsed .vf-toggle.is-active {
+    color: var(--text-muted); border-color: var(--border-color); background: none;
+}
+
+@media (max-width: 768px) {
+    /* Раньше здесь была та же горизонтальная "таблетка", что на десктопе,
+       просто с flex-wrap — и при 4 значениях+кнопке сворачивания перенос
+       срабатывал прямо посередине, оставляя стрелку сиротой на своей
+       строке (см. историю чата). На мобильной ширине вместо переноса
+       строим вертикальный список: каждое значение — отдельная строка-
+       карточка на всю ширину (см. .vf-island__item ниже), фон/рамка
+       переехали с общей таблетки на каждую строку. Кнопку сворачивания
+       внутри карточки убрали — она дублировала шестерёнку в шапке (та же
+       .vf-toggle), а на референсе её и не было. */
+    .vf-island__pill {
+        flex-direction: column; align-items: stretch; flex-wrap: nowrap;
+        gap: 8px; max-width: 82vw;
+        background: none; border: none; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none;
+    }
+    .vf-island__item {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 0.75rem; padding: 11px 14px; border-radius: 8px;
+        background: color-mix(in srgb, var(--base-bg) 70%, transparent);
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    .vf-island__icon { display: block; width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.7px; flex-shrink: 0; }
+    .vf-island__divider { display: none; } /* были разделителями между значениями В СТРОКУ — теперь у каждого своя карточка, не нужны */
+    .vf-island__collapse { display: none; } /* см. комментарий выше про шестерёнку */
+
+    /* Карточку REC/ISO/F/Температура на мобильной ширине прижимаем к
+       правой стенке вместо левой (.vf-island задаёт left:5vw — это
+       десктопное значение, единое на все ширины вне медиа-запроса, см.
+       её у .header выше). left убираем, чтобы не тянул ширину карточки
+       от левого края одновременно с right. */
+    .vf-island { left: auto; right: 5vw; }
+}
+
+.showcase-page {
+    display: flex; flex-direction: column; gap: 0;
+    padding: 0 5vw; position: relative; z-index: 10;
+    max-width: 1600px; margin: 0 auto; width: 100%;
+}
+
+.showcase-menu { display: flex; border-top: 1px solid var(--border-color); flex-shrink: 0; }
+.showcase-item {
+    flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: center;
+    padding: 22px 26px; text-decoration: none; color: var(--text-main);
+    border-right: 1px solid var(--border-color);
+    transition: opacity 0.4s ease, background-color 0.4s ease;
+}
+.showcase-item:last-child { border-right: none; }
+.showcase-item__num { font-size: 0.75rem; color: var(--text-muted); }
+.showcase-item__title {
+    font-family: var(--font-heading); font-size: clamp(1.4rem, 2.3vw, 2.1rem);
+    font-weight: 400; font-style: italic; transform: translateY(0);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s ease;
+}
+.showcase-item__tag { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); opacity: 0.6; transition: opacity 0.4s ease, color 0.4s ease; }
+
+/* Эффекты меню */
+.showcase-menu:hover .showcase-item { opacity: 0.4; }
+.showcase-menu .showcase-item:hover { opacity: 1; background-color: var(--hover-tint); }
+.showcase-item:hover .showcase-item__title { transform: translateY(-5px); }
+.showcase-item:hover .showcase-item__tag { opacity: 1; }
+/* Состояние КЛИКА (Активный пункт) */
+.showcase-item.is-selected { opacity: 1; }
+.showcase-item.is-selected .showcase-item__title { transform: translateY(-5px); color: var(--accent-wheat); }
+.showcase-item.is-selected .showcase-item__tag { opacity: 1; color: var(--text-main); }
+
+
+/* =========================================
+   ГЕРОЙ (Фото на всю ширину + подпись поверх)
+========================================= */
+/* --hero-ink/--hero-ink-muted/--hero-shadow — цвет текста и его "свечения"
+   над фото. По умолчанию рассчитаны на тёмное фото (светлый текст).
+   JS меряет яркость активного фото (тот же ColorThief, что и для
+   хамелеон-фона) и вешает .is-light-surface, если фото светлое —
+   тогда текст становится тёмным. Если позже добавите светлую тему
+   сайта целиком — тот же приём (свои custom-properties + класс на
+   body) можно переиспользовать и там. */
+/* =========================================
+   ГЕРОЙ (Фото на всю ширину + подпись поверх)
+========================================= */
+.showcase-display {
+    /* Переменные для ТЕКСТА снизу. По умолчанию (пока JS не измерил яркость
+       конкретного фото) считаем фото тёмным — значит, текст должен быть
+       светлым. Раньше здесь стоял var(--text-main), из-за чего в светлой
+       теме сайта текст становился тёмным и терялся на тёмной шторке фото —
+       используем --photo-ink, который не зависит от темы (см. :root). */
+    --bottom-ink: var(--photo-ink);
+    --bottom-ink-muted: var(--photo-ink-muted);
+    --bottom-shadow: var(--photo-shadow);
+    --cover-scrim-dark: rgba(8, 8, 8, 0.85);
+
+    /* Переменные для кнопки НАЗАД сверху — та же логика */
+    --top-ink: var(--photo-ink);
+    --top-shadow: var(--photo-shadow);
+    --cover-scrim-light: rgba(8, 8, 8, 0.1);
+
+    position: relative; width: 100%; height: 80vh; overflow: hidden; border-radius: 2px;
+}
+
+/* Если скрипт нашел яркий свет СНИЗУ (Текст) */
+.showcase-display.is-light-bottom {
+    --bottom-ink: #080808;
+    --bottom-ink-muted: #4a4a4a;
+    --bottom-shadow: rgba(255, 255, 255, 0.65);
+    --cover-scrim-dark: rgba(234, 230, 220, 0.95);
+}
+
+/* Если скрипт нашел яркий свет СВЕРХУ (Кнопка Назад) */
+.showcase-display.is-light-top {
+    --top-ink: #080808;
+    --top-shadow: rgba(255, 255, 255, 0.65);
+    --cover-scrim-light: rgba(234, 230, 220, 0.4);
+}
+
+.display-media { position: absolute; inset: 0; }
+.display-media__layer {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; opacity: 0;
+    /* --photo-zoom по умолчанию не задан (= 1 через var(...,1)) — тогда
+       это просто прежняя постоянная анимация въезда 1.08→1. Не задаём его
+       тут напрямую: он появляется только внутри мобильного медиа-запроса
+       ниже, для категорий с настроенным mobile_zoom (см. index.html и
+       .vf-toggle-mobile ниже — тот же принцип "переменная имеет эффект
+       только там, где её кто-то реально читает"). */
+    transform: scale(calc(1.08 * var(--photo-zoom, 1)));
+    transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.display-media__layer.active { opacity: 1; transform: scale(var(--photo-zoom, 1)); }
+
+/* Заглушка стартового фото (если нет реальной картинки) */
+#media-state-default {
+    background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+        radial-gradient(ellipse at 50% 35%, #2c2c2c 0%, #0a0a0a 75%);
+    background-size: 220px, cover; background-blend-mode: overlay;
+}
+
+/* Градиент адаптируется: верх слушает --cover-scrim-light, низ --cover-scrim-dark */
+.display-scrim {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, var(--cover-scrim-light) 0%, rgba(8, 8, 8, 0.05) 35%, var(--cover-scrim-dark) 100%);
+    transition: background 0.8s ease;
+}
+
+.display-content {
+    position: absolute; left: 0; bottom: 0; width: 100%;
+    padding: 0 44px 36px; box-sizing: border-box;
+    opacity: 0; pointer-events: none; transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.display-content.active {
+    opacity: 1; pointer-events: auto; transform: translateY(0);
+}
+
+/* Стили кнопки НАЗАД (Слушает --top-ink) */
+.display-back {
+    position: absolute; top: 40px; left: 44px; z-index: 20; cursor: pointer;
+    background: none; border: none; font-family: var(--font-ui);
+    font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;
+    color: var(--top-ink); text-shadow: 0 2px 10px var(--top-shadow); 
+    opacity: 0; pointer-events: none; transform: translateX(-15px);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.8s ease, text-shadow 0.8s ease;
+}
+.display-back:hover { color: var(--accent-wheat); }
+.showcase-display.has-selection .display-back { opacity: 0.8; pointer-events: auto; transform: translateX(0); }
+
+
+/* Стили Манифеста и Описаний (Слушают --bottom-ink) */
+.manifesto-eyebrow { font-size: 0.75rem; letter-spacing: 0.2em; color: var(--bottom-ink-muted); margin-bottom: 1rem; text-shadow: 0 2px 16px var(--bottom-shadow); transition: color 0.4s ease, text-shadow 0.4s ease; }
+.manifesto-title { font-family: var(--font-heading); font-size: clamp(2.2rem, 4.4vw, 4rem); font-weight: 400; line-height: 0.95; margin-bottom: 0.9rem; color: var(--bottom-ink); text-shadow: 0 4px 24px var(--bottom-shadow); transition: color 0.4s ease, text-shadow 0.4s ease; }
+.manifesto-title .italic { font-style: italic; color: var(--bottom-ink-muted); transition: color 0.4s ease; }
+.manifesto-desc { font-size: 0.95rem; line-height: 1.6; color: var(--bottom-ink-muted); max-width: 460px; text-shadow: 0 2px 16px var(--bottom-shadow); transition: color 0.4s ease, text-shadow 0.4s ease; }
+
+.preview-desc { font-size: 0.95rem; line-height: 1.6; color: var(--bottom-ink-muted); max-width: 460px; margin-bottom: 20px; text-shadow: 0 2px 16px var(--bottom-shadow); transition: color 0.4s ease, text-shadow 0.4s ease; }
+
+.preview-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--bottom-ink); text-decoration: none; font-weight: 600;
+    border-bottom: 1px solid color-mix(in srgb, var(--bottom-ink) 30%, transparent); padding-bottom: 5px;
+    transition: border-color 0.3s ease, gap 0.3s ease, color 0.4s ease;
+}
+.preview-btn:hover { border-color: var(--bottom-ink); gap: 15px; }
+
+/* На десктопе категория переключается наведением/кликом по текстовому
+   меню справа от фото — точки-индикатор там не нужны, включаются только
+   в мобильном медиа-запросе ниже. */
+.hero-dots { display: none; }
+
+
+/* =========================================
+   УСЛУГИ
+========================================= */
+.services { padding: 12vh 0 10vh; border-top: 1px solid var(--border-color); position: relative; z-index: 10; }
+.services__inner { max-width: 1600px; margin: 0 auto; padding: 0 5vw; }
+.services__title { font-family: var(--font-heading); font-style: italic; font-weight: 400; font-size: clamp(1.8rem, 3vw, 2.6rem); color: var(--text-muted); margin-bottom: 6vh; }
+.services__list { list-style: none; }
+.services__item {
+    display: flex; align-items: baseline; gap: 28px;
+    padding: 24px 0; border-bottom: 1px solid var(--border-color);
+    transition: opacity 0.4s ease;
+}
+.services__list:hover .services__item { opacity: 0.45; }
+.services__list .services__item:hover { opacity: 1; }
+.services__num { font-size: 0.8rem; color: var(--text-muted); flex-shrink: 0; width: 24px; }
+.services__name { font-family: var(--font-heading); font-style: italic; font-weight: 400; font-size: clamp(1.3rem, 2.4vw, 2rem); flex-shrink: 0; }
+.services__desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; max-width: 420px; }
+/* .services__meta — обёртка для цены и плашки "Доп. плата" вместе: раньше
+   margin-left:auto был прямо на .services__badge, и если добавить рядом
+   ещё и цену, обе тянулись бы вправо независимо и наезжали друг на друга
+   (у auto-отступа так не работает — вправо уезжает только первый). Обёртка
+   прижимается вправо целиком, а цена/плашка внутри просто в ряд через gap. */
+.services__meta { margin-left: auto; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.services__price { font-size: 0.95rem; font-weight: 600; color: var(--accent-wheat); white-space: nowrap; }
+.services__badge {
+    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--accent-wheat); border: 1px solid rgba(230, 179, 34, 0.4);
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+}
+.services__item--highlight .services__name { color: var(--accent-wheat); }
+
+/* =========================================
+   РЕТУШЬ ДО/ПОСЛЕ — перетаскиваемый слайдер сравнения.
+   Несколько .compare независимы друг от друга: каждый следит только
+   за своим --pos через CSS-переменную на .compare__frame.
+========================================= */
+.retouch { padding: 2vh 0 12vh; position: relative; z-index: 10; }
+.retouch__inner { max-width: 1600px; margin: 0 auto; padding: 0 5vw; }
+.retouch__title { font-family: var(--font-heading); font-weight: 400; font-size: clamp(1.8rem, 3vw, 2.6rem); margin-bottom: 0.6rem; }
+.retouch__title .italic { font-style: italic; color: var(--text-muted); }
+.retouch__intro { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5vh; }
+.retouch__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+
+.compare__frame {
+    position: relative; width: 100%; aspect-ratio: 4 / 3;
+    overflow: hidden; border-radius: 2px;
+    /* touch-action убрали отсюда — раньше стоял на весь кадр, из-за чего
+       любое касание где угодно внутри "до/после" блокировало скролл
+       страницы. Теперь его блокирует только сам шарик (см.
+       .compare__handle-grip ниже), а остальная часть кадра скроллится
+       как обычно. */
+}
+.compare__img { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.compare__img--after { background-image: radial-gradient(ellipse at 40% 30%, #4a4030 0%, #1a1610 70%); }
+.compare__img--before {
+    background-image: radial-gradient(ellipse at 40% 30%, #333333 0%, #0a0a0a 70%);
+    clip-path: inset(0 calc(100% - var(--pos, 50%)) 0 0); /* видна только левая часть до --pos */
+}
+.compare__img--bg.compare__img--after { background-image: radial-gradient(ellipse at 60% 50%, #e8e2d0 0%, #cfc8ae 100%); }
+.compare__img--bg.compare__img--before {
+    background-image: repeating-linear-gradient(45deg, #2a2a2a, #2a2a2a 8px, #1c1c1c 8px, #1c1c1c 16px);
+    filter: none;
+}
+
+.compare__tag { position: absolute; top: 14px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.85); background: rgba(8, 8, 8, 0.45); padding: 5px 10px; backdrop-filter: blur(3px); pointer-events: none; z-index: 3; }
+.compare__tag--before { left: 14px; }
+.compare__tag--after { right: 14px; }
+
+.compare__handle { position: absolute; top: 0; bottom: 0; left: var(--pos, 50%); transform: translateX(-50%); pointer-events: none; z-index: 4; }
+.compare__handle-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: rgba(255, 255, 255, 0.75); transform: translateX(-50%); }
+.compare__handle-grip {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.85);
+    background: rgba(8, 8, 8, 0.45); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    /* .compare__handle (родитель) — pointer-events:none, а вот сам шарик
+       должен ловить касание/клик отдельно от остального кадра (см.
+       script.js — перетаскивание на тач начинается только отсюда). */
+    pointer-events: auto;
+    touch-action: none; /* блокируем скролл под пальцем именно тут, локально, а не на весь .compare__frame */
+}
+/* Стрелка была символом "↔" — у большинства шрифтов этот глиф не выровнен
+   по центру своего же бокса (гуляет и по вертикали, и по горизонтали),
+   поэтому в кружке она сидела криво. SVG-иконка центрируется тем же
+   flex, но уже без шрифтовых метрик — ровно посередине. */
+.compare__handle-grip svg {
+    width: 16px; height: 16px; stroke: #fff; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+/* Увеличиваем область попадания пальцем, не меняя видимый размер кружка —
+   42px чуть меньше рекомендуемого минимума в 44px для тач-целей. */
+.compare__handle-grip::before {
+    content: ''; position: absolute; inset: -4px; border-radius: 50%;
+}
+.compare__caption { margin-top: 14px; font-size: 0.85rem; color: var(--text-muted); font-style: italic; font-family: var(--font-heading); }
+
+
+/* =========================================
+   ФУТЕР
+========================================= */
+/* «Волчий след» (выбран владельцем по прототипу). Всё по центру, слева от имени
+   колос (prototypes/footer-wolf, «Б»); следы лапок
+   рисует script.js в слое .footer-trail («ПОДВАЛ: ВОЛЧИЙ СЛЕД»). Режим —
+   в data-mode (walking / idle / cursor / stroll), .is-arrived — колос
+   «загорелся», .is-watching — видна надпись «Великая волчица наблюдает». */
+.footer { padding: 0 5vw; border-top: 1px solid var(--border-color); z-index: 10; position: relative; overflow: clip; }
+.footer-trail { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.footer-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 46px 0 34px; text-align: center; }
+
+.footer-name { font: 400 1.9rem/1.1 var(--font-heading); color: var(--text-main); text-decoration: none; transition: color 0.3s; }
+.footer-name:hover { color: var(--accent-wheat); }
+.footer-socials { display: flex; gap: 10px; }
+.footer-social {
+    display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-color);
+    color: var(--text-main); transition: color 0.3s, border-color 0.3s, transform 0.3s;
+}
+.footer-social:hover { color: var(--accent-wheat); border-color: var(--accent-wheat); transform: translateY(-2px); }
+/* Иконка из БД красится маской под цвет текста (как в окне «Связаться») */
+.footer-social__icon {
+    width: 18px; height: 18px; background: currentColor;
+    -webkit-mask: var(--icon-url) center / contain no-repeat; mask: var(--icon-url) center / contain no-repeat;
+}
+.footer-legal { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; }
+.footer-legal a { font-size: 0.74rem; color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+.footer-legal a:hover { color: var(--accent-wheat); }
+.copyright { margin: 0; font-size: 0.74rem; color: var(--text-muted); }
+
+/* Колос — кнопка, переключающая режимы следов. Стоит слева от имени (.footer-sign) */
+.footer-sign { display: flex; align-items: center; gap: 4px; }
+.footer-sign .footer-name { margin-top: 6px; }
+.wisewolf-seal { display: flex; padding: 0; border-radius: 10px; color: var(--text-muted); transition: color 0.4s ease; cursor: pointer; outline-offset: 4px; }
+.wisewolf-seal:hover { color: var(--accent-wheat); }
+.holo-icon { width: 46px; height: 46px; transform-origin: 50% 100%; transition: transform 0.6s cubic-bezier(0.34, 1.6, 0.64, 1), filter 0.5s; }
+.wisewolf-seal:hover .holo-icon { transform: rotate(-8deg); }
+.wheat-stem, .wheat-awns { fill: none; stroke: currentColor; stroke-linecap: round; }
+.wheat-stem { stroke-width: 2.2; }
+.wheat-awns { stroke-width: 1.3; opacity: 0.7; }
+.wheat-grains { fill: currentColor; fill-opacity: 0.18; stroke: currentColor; stroke-width: 1.8; }
+.wisewolf-text {
+    margin-top: -10px; font-family: var(--font-heading); font-style: italic; font-size: 0.95rem; white-space: nowrap; color: var(--accent-wheat);
+    opacity: 0; transform: translateY(-6px); transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.footer.is-watching .wisewolf-text { opacity: 1; transform: none; }
+/* следы дошли — колос загорается и качается; пока ждёт первого нажатия — мягко «дышит» светом */
+.footer.is-arrived .wisewolf-seal { color: var(--accent-wheat); }
+.footer.is-arrived .holo-icon { filter: drop-shadow(0 0 10px rgba(230, 179, 34, 0.55)); animation: footer-sway 1.6s ease-in-out 2; }
+.footer[data-mode="idle"] .holo-icon { animation: footer-sway 1.6s ease-in-out 2; }
+@keyframes footer-sway { 25% { transform: rotate(-7deg); } 75% { transform: rotate(5deg); } }
+/* «Дыхание» — прозрачностью мягкого пятна света за колосом. Раньше анимировался
+   filter самой иконки, а такое браузер перерисовывает каждый кадр, бесконечно. */
+.wisewolf-seal { position: relative; }
+.wisewolf-seal::before {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(230, 179, 34, 0.28), transparent 68%); opacity: 0; pointer-events: none;
+}
+.footer[data-mode="idle"] .wisewolf-seal::before { animation: footer-glow 2.4s 3.2s ease-in-out infinite; }
+@keyframes footer-glow { 50% { opacity: 1; } }
+
+/* Следы за курсором по всей странице (режим «за курсором»): слой во всю высоту
+   документа поверх контента, но под cookie-баннером, курсором и окнами */
+/* Высота 0: следы рисуются там, где курсор, и не растягивают страницу (раньше слой
+   был во всю высоту документа и не сжимался — после фильтра в галерее внизу
+   оставалась пустая прокрутка). Обрезаем только по бокам — чтобы след у края
+   не давал горизонтальной прокрутки. */
+.footer-cursor-trail { position: absolute; left: 0; top: 0; width: 100%; height: 0; overflow-x: clip; overflow-y: visible; pointer-events: none; z-index: 10400; }
+/* След лапки. --ang — куда смотрят пальцы, --op — яркость */
+.footer-print { position: absolute; color: var(--accent-wheat); opacity: 0; transform: rotate(var(--ang)) scale(0.5);
+    transition: opacity 0.35s, transform 0.35s cubic-bezier(0.34, 1.6, 0.64, 1); }
+.footer-print.is-on { opacity: var(--op); transform: rotate(var(--ang)) scale(1); }
+.footer-print.is-off { opacity: 0; transition: opacity 0.9s; }
+.footer-print svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+@media (prefers-reduced-motion: reduce) {
+    .footer.is-arrived .holo-icon, .footer[data-mode="idle"] .holo-icon, .footer[data-mode="idle"] .wisewolf-seal::before { animation: none; }
+}
+
+@media (max-width: 768px) {
+    .bg-typography { display: none !important; }
+    
+    /* Видоискатель: сетку линий и курсорную рамку прячем (на тач-экране
+       следить за курсором нечем), сам .viewfinder-ui оставляем — внутри
+       него живут статичные уголки .vf-corners (см. их стили выше). */
+    .vf-grid-line, .vf-focus-group { display: none !important; }
+    .vf-corners { display: block; }
+
+    /* Шапка: обычный .nav из трёх ссылок (и кнопки "Связаться" внутри
+       него) прячем, вместо него — бургер (см. его стили выше, кнопка вне
+       .header-wrap) и полноэкранное меню. */
+    .nav { display: none; }
+    .burger { display: flex; }
+    .mobile-nav { display: flex; }
+    .mobile-cta { display: flex; }
+    /* Место под плавающую кнопку связи снизу, чтобы она не перекрывала
+       последний блок страницы (футер/контакты). Кнопка стала компактнее
+       (38px, угол вместо во всю ширину) — места под неё нужно меньше, чем
+       раньше. Если кнопки на странице нет (нет соцсетей/телефона), это
+       просто немного пустого места внизу. */
+    .footer-content { padding-bottom: 76px; }
+
+    /* Cookie-баннер: на мобильной ширине рамки-курсора нет, так что
+       поднимаем его над плавающей кнопкой "Связаться" (10550) — иначе она
+       залезает на кнопку "Продолжить". Текст и кнопка — в столбик. */
+    .cookie-banner { z-index: 10560; flex-direction: column; align-items: stretch; gap: 12px; }
+    .mobile-nav.is-open ~ .cookie-banner { opacity: 0; pointer-events: none; } /* как у .mobile-cta */
+
+    /* Шестерёнка (вкл/выкл карточку REC/ISO/F/Температура) переезжает из
+       .header-left к бургеру. Простого position:fixed тут недостаточно:
+       .vf-toggle остаётся ВНУТРИ .header, а у неё свой контекст наложения
+       (position:sticky + z-index:20, см. выше) — z-index кнопки внутри
+       сравнивался бы только с соседями по шапке, а не с контентом страниц
+       (например, .filter-bar в галерее — z-index:70, выше "20" шапки — и
+       на скролле перекрыл бы шестерёнку). Та же причина, по которой бургер
+       живёт HTML-элементом СНАРУЖИ .header-wrap (см. её комментарий) — для
+       шестерёнки сделано так же: прячем исходную кнопку внутри шапки,
+       вместо неё показываем #vf-toggle-mobile — отдельный клон в разметке
+       (см. base.html), уже вне контекста наложения шапки. Оба переключателя
+       ведут одну и ту же карточку и держатся синхронно (см. script.js). */
+    .header-left .vf-toggle { display: none; }
+    .vf-toggle-mobile {
+        display: flex; position: fixed; top: 27px; right: calc(5vw + 46px); z-index: 10500;
+    }
+
+    /* === ГЛАВНАЯ И АЛЬБОМ, МОБИЛЬНАЯ ШИРИНА: шапка — прозрачная плашка
+       поверх фото, а не отдельная полоса над ним. Из потока убираем
+       (position:absolute), тогда фото в хиро ничего сверху не подпирает и
+       стартует от самого верха экрана — см. .showcase-display ниже (для
+       альбома — .album-hero, там же и стал полноэкранным). На "Галерее"
+       и "Обо мне" шапка остаётся как была: там нет полноэкранного фото,
+       которому нужно место под ней. Фон и блюр самой .header тоже
+       убираем — логотип/подзаголовок/шестерёнка лежат прямо на фото,
+       поэтому им нужна лёгкая тень для читаемости вместо плашки. */
+    body.home-page .header-wrap, body.album-page .header-wrap { position: absolute; top: 0; left: 0; right: 0; z-index: 30; }
+    body.home-page .header, body.album-page .header {
+        position: static; border-bottom: none;
+        background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none;
+    }
+    /* Всё, что лежит прямо на прозрачной шапке (лого, подзаголовок,
+       бургер, шестерёнка, уголки видоискателя) красим через --photo-ink /
+       --photo-ink-muted, а НЕ через --text-main/--text-muted/--cursor-base.
+       Это принципиально: --text-main и т.п. зависят от ВЫБРАННОЙ ТЕМЫ
+       сайта (см. [data-theme="..."] в самом начале файла) — в светлой
+       теме --text-main тёмный. А тут элементы лежат на ФОТО, и то, каким
+       быть их цвету по умолчанию, должно зависеть от того, что на фото
+       (обычно тёмная шторка — значит текст светлый), а не от темы сайта.
+       --photo-ink/--photo-ink-muted специально не переопределяются внутри
+       [data-theme], уже светлые всегда — то же самое, чем красится
+       кнопка "Назад" в хиро. Подзаголовок при этом взял именно
+       --photo-ink-muted (а не --text-muted) ещё и потому, что он светлее
+       (#b8b4ac против тёмно-серого #666666) — тёмно-серый плохо читался
+       на светло-серых/голубоватых фото: недостаточно контраста ни с
+       тёмным, ни со светлым участком. */
+    body.home-page .logo, body.album-page .logo,
+    body.home-page .logo-subtitle, body.album-page .logo-subtitle {
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+    }
+    body.home-page .logo, body.album-page .logo { color: var(--photo-ink); }
+    body.home-page .logo-subtitle, body.album-page .logo-subtitle { color: var(--photo-ink-muted); }
+    /* .header-on-light-photo — тот же принцип, что и is-light-top у
+       .display-back чуть выше по файлу (кнопка "Назад" в хиро): меряет
+       JS (getVisibleRegionLuminance по верхнему левому углу текущего
+       фото, см. script.js) и решает, светлый там участок или тёмный.
+       Именно поэтому класс — на body, а не на .showcase-display: сама
+       шапка лежит ВНЕ .showcase-display в разметке (см. base.html), но
+       съезжает на тот же самый прозрачный слой над тем же фото. JS сам
+       снимает класс, если проскроллить ниже героя — там уже не фото, а
+       обычный фон страницы, фото-адаптация там не нужна (и может быть
+       некстати: тёмный текст, унаследованный с фото, поверх тёмного фона
+       страницы был бы не виден). */
+    body.home-page.header-on-light-photo .logo, body.album-page.header-on-light-photo .logo,
+    body.home-page.header-on-light-photo .logo-subtitle, body.album-page.header-on-light-photo .logo-subtitle {
+        color: #080808;
+        text-shadow: 0 2px 10px rgba(255, 255, 255, 0.55);
+    }
+    body.home-page .vf-toggle svg, body.album-page .vf-toggle svg { filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7)); }
+    body.home-page .burger__line, body.album-page .burger__line { background: var(--photo-ink); filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7)); }
+    body.home-page .vf-toggle-mobile, body.album-page .vf-toggle-mobile { color: var(--photo-ink-muted); border-color: rgba(255, 255, 255, 0.3); }
+    body.home-page .vf-corner, body.album-page .vf-corner { border-color: var(--photo-ink); }
+
+    /* Бургер и шестерёнка (в её приглушённом, неактивном виде — активная и
+       так достаточно контрастна за счёт --accent-wheat, он не зависит ни
+       от темы, ни от фото) на светлом участке фото были почти не видны:
+       светлые линии/иконка на светлом фото. Тот же .header-on-light-photo,
+       что и у лого выше, — переключает их на тёмные с белой подсветкой
+       вместо тёмной. */
+    body.home-page.header-on-light-photo .burger__line, body.album-page.header-on-light-photo .burger__line {
+        background: #080808;
+        filter: drop-shadow(0 1px 4px rgba(255, 255, 255, 0.55));
+    }
+    /* Раскрытый бургер (крестик, .burger[aria-expanded="true"]) сидит уже
+       не на фото, а на непрозрачном фоне .mobile-nav (заливка под цвет
+       темы — .base-bg, см. её стили выше). Значит и его цвет должен
+       зависеть от темы сайта (--text-main), а не от яркости того фото,
+       что было под шапкой ДО открытия меню — иначе на светлом фото
+       крестик оставался бы тёмным (см. .header-on-light-photo выше) и
+       пропадал на тёмном фоне открытого меню. Специфичность у этого
+       правила выше (на класс больше), поэтому побеждает независимо от
+       порядка в файле. Здесь как раз тот случай, где нужен именно
+       --text-main (цвет темы), а не --photo-ink: фон уже не фото. */
+    body.home-page .burger[aria-expanded="true"] .burger__line, body.album-page .burger[aria-expanded="true"] .burger__line {
+        background: var(--text-main);
+        filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
+    }
+    body.home-page.header-on-light-photo .vf-toggle-mobile:not(.is-active), body.album-page.header-on-light-photo .vf-toggle-mobile:not(.is-active) {
+        color: #080808; border-color: rgba(8, 8, 8, 0.35);
+    }
+    body.home-page.header-on-light-photo .vf-toggle-mobile svg, body.album-page.header-on-light-photo .vf-toggle-mobile svg {
+        filter: drop-shadow(0 1px 4px rgba(255, 255, 255, 0.55));
+    }
+    body.home-page.header-on-light-photo .vf-corner, body.album-page.header-on-light-photo .vf-corner { border-color: #080808; }
+
+    /* Мобильная обрезка/зум фото категорий (Направления → редактировать →
+       "Обложка для мобильной версии" в админке) — переменные приходят
+       инлайн-стилем из d.mobile_focus_x/y и d.mobile_zoom (см. index.html),
+       но реально что-то значат ТОЛЬКО тут, внутри мобильного медиа-запроса:
+       на десктопе те же переменные просто никем не читаются, и фото
+       показывается как раньше, обычным center-cover на всю ширину —
+       ровно то, что и просили ("для ПК понятно что фулл сайз"). */
+    .display-media__layer {
+        object-position: var(--mobile-focus-x, 50%) var(--mobile-focus-y, 50%);
+        --photo-zoom: var(--mobile-zoom, 1);
+        /* на телефоне кадры листаются сами — смена неторопливая, под паузу 4,5 с в script.js */
+        transition: opacity 1.6s cubic-bezier(0.4, 0, 0.2, 1), transform 2.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* === ГЕРОЙ: фото на весь экран, от самого верха, без отступов по
+       краям === */
+    .showcase-page { padding-bottom: 3vh; }
+    body.home-page .showcase-page { padding-left: 0; padding-right: 0; }
+    .showcase-display {
+        height: 78vh; /* запасной вариант для браузеров без svh */
+        height: calc(100svh - 96px);
+        min-height: 460px;
+        /* Разрешаем браузеру нативно скроллить страницу вертикально этим
+           же пальцем без промедления — а не ждать, чтобы JS сперва решил,
+           наш это жест или нет. Категории при этом всё равно листаются:
+           script.js трогает preventDefault только когда жест уже явно
+           горизонтальный (свайп), вертикальный скролл он не перехватывает. */
+        touch-action: pan-y;
+    }
+    body.home-page .showcase-display {
+        /* Было width:100vw + margin:0 -5vw — приём "выбить фото из отступа
+           родителя", как раньше был у .showcase-menu. Но с .showcase-page
+           родитель ВЫШЕ уже обнулил себе padding (см. правило чуть выше) —
+           и margin-компенсация "простреливала" мимо: слева бился о край
+           вьюпорта нормально, а справа не дотягивался ровно на те же 5vw
+           (ширина считалась от 100vw, а позиция уже была сдвинута на -5vw
+           влево), оставляя щель тёмного фона у правого края экрана. Раз
+           родитель и так уже без отступов, фото просто наследует его
+           полные 100% ширины (это уже дефолт у .showcase-display выше) —
+           никакой отдельной ширины/margin тут задавать не нужно.
+           И во всю высоту экрана — шапка над ним больше не занимает места,
+           она плавает поверх (см. .header-wrap выше), поэтому вычитать её
+           высоту из 100svh больше не нужно. */
+        border-radius: 0;
+        height: 100svh; min-height: 0;
+    }
+    .display-content { padding: 0 22px 46px; }
+    .display-back {
+        /* Считаем от той же --header-h, что и сама карточка REC/ISO/F/
+           температура (.vf-island выше) — плюс её собственный верхний
+           отступ (12px) и полная высота новой вертикальной раскладки
+           (4 строки + зазоры ≈ 203px), плюс небольшой запас (16px), чтобы
+           кнопка не липла к последней строке. Если реальная высота шапки
+           где-то отличается — съедет вместе с ней, а не оторвётся. */
+        top: calc(var(--header-h, 80px));
+        left: 22px;
+    }
+    .manifesto-desc { max-width: 100%; }
+
+    /* === КАТЕГОРИИ: свайп прямо по фото в хиро, точки-индикатор внизу ===
+       Раньше тут был отдельный горизонтальный скролл карточек под фото —
+       на маленьком экране он выглядел как обрезанная где попало полоска
+       (см. историю чата) и вдобавок дублировал функцию, которую теперь
+       выполняет сам хиро. Список остаётся только для десктопа (текстовое
+       меню рядом с фото, см. .showcase-menu без медиа-запроса выше). */
+    .showcase-menu { display: none; }
+
+    .hero-dots {
+        display: flex; justify-content: center; gap: 7px;
+        position: absolute; left: 0; right: 0; bottom: 20px; z-index: 2;
+    }
+    .hero-dots__item {
+        width: 5px; height: 5px; border-radius: 50%;
+        background: color-mix(in srgb, var(--bottom-ink) 40%, transparent);
+        transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    .hero-dots__item.is-active { background: var(--accent-wheat); transform: scale(1.4); }
+
+    /* === УСЛУГИ: номер — в кружок побольше, описание — отдельной строкой === */
+    .services { padding: 8vh 0 7vh; }
+    .services__item {
+        flex-wrap: wrap; align-items: center; row-gap: 10px; padding: 20px 0;
+    }
+    .services__num {
+        display: flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; border: 1px solid var(--border-color); border-radius: 50%;
+    }
+    .services__desc { flex-basis: 100%; margin-left: 62px; max-width: none; }
+    .services__meta { margin-left: 62px; }
+
+    .retouch__grid { grid-template-columns: 1fr; }
+
+    /* === МОДАЛКА "СВЯЗАТЬСЯ": на десктопе — центрированная карточка (см.
+       базовые стили выше), на мобильной ширине превращаем в шторку,
+       выезжающую снизу — как на референсе. */
+    .contact-modal { align-items: flex-end; padding: 0; }
+    .contact-modal__sheet {
+        width: 100%; max-height: 88vh; border-radius: 22px 22px 0 0;
+        padding: 14px 20px 28px;
+        transform: translateY(100%); opacity: 1;
+    }
+    .contact-modal.is-open .contact-modal__sheet { transform: translateY(0); }
+    .contact-modal__handle {
+        display: block; width: 38px; height: 4px; border-radius: 2px;
+        background: var(--border-color); margin: 0 auto 20px;
+    }
+}
+
+/* =========================================
+   СРОК ДО УДАЛЕНИЯ АЛЬБОМА — «5 дн» в уголках автофокуса (_expiry_rec.html)
+   На карточке в галерее и на обложке альбома. Выбрано владельцем по
+   прототипу prototypes/album-extras («Л» + показ при наведении — в
+   gallery.css). .is-soon — 3 дня и меньше: жёлтое; .is-last — сегодня.
+========================================= */
+.expiry-rec { display: inline-flex; white-space: nowrap; color: rgba(255, 255, 255, 0.78);
+    font: 500 0.7rem var(--font-ui); letter-spacing: 0.06em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 0, 0, 0.5); }
+.expiry-rec.is-soon { color: #f0c24a; }
+.expiry-rec__box { padding: 3px 7px; --c: currentColor; --l: 5px; --t: 1px;
+    background:
+        linear-gradient(var(--c), var(--c)) left top / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) left top / var(--t) var(--l) no-repeat,
+        linear-gradient(var(--c), var(--c)) right top / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) right top / var(--t) var(--l) no-repeat,
+        linear-gradient(var(--c), var(--c)) left bottom / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) left bottom / var(--t) var(--l) no-repeat,
+        linear-gradient(var(--c), var(--c)) right bottom / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) right bottom / var(--t) var(--l) no-repeat; }

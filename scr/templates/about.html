@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{# Превью ссылки: фото «Обо мне» или аватар (см. base.html) #}
+{% set og_title = 'Обо мне' ~ (' — ' ~ site_owner.name ~ ' ' ~ site_owner.surname if site_owner else '') %}
+{% if site_owner and site_owner.about_photo_url %}{% set og_image = site_owner.about_photo_url %}{% endif %}
+
+{% block title %}Обо мне | {{ site_owner.name }} {{ site_owner.surname }}{% endblock %}
+{% block body_class %}fade-in about-bg{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
+{% endblock %}
+
+{% block content %}
+    <main class="about-page">
+        <!-- БЛОК 1: «КАДР» (выбран владельцем по прототипу) — портрет во всю
+             ширину, как в видоискателе: данные съёмки, шкала экспозиции и рамка
+             автофокуса, которая при загрузке «ловит» лицо. Фото и точки фокуса
+             (отдельно ПК и телефон) задаются в админке: Настройки → «Фото на
+             странице Обо мне». Всё на CSS-переменных, без скриптов (about.css). -->
+        {% set about_photo = site_owner.about_photo_url or site_owner.avatar_url %}
+        <section class="about-hero">
+            {% set fx = site_owner.about_focus_x if site_owner.about_focus_x is not none else 50 %}
+            {% set fy = site_owner.about_focus_y if site_owner.about_focus_y is not none else 30 %}
+            {% set mfx = site_owner.about_mobile_focus_x if site_owner.about_mobile_focus_x is not none else 50 %}
+            {% set mfy = site_owner.about_mobile_focus_y if site_owner.about_mobile_focus_y is not none else 30 %}
+            <figure class="about-shot"
+                    style="--fx: {{ fx }}%; --fy: {{ fy }}%; --mfx: {{ mfx }}%; --mfy: {{ mfy }}%;">
+                <img src="{{ media_url(about_photo) }}" alt="{{ site_owner.name }} {{ site_owner.surname }}">
+                <span class="about-shot__af" aria-hidden="true"></span>
+                <div class="about-shot__hud" aria-hidden="true">
+                    <span class="about-shot__rec">● REC</span><span>1/250</span><span>F2.0</span><span class="about-shot__iso">ISO 400</span><span class="about-shot__frame">[ 01 ]</span>
+                </div>
+                <div class="about-shot__meter" aria-hidden="true"><span>-2</span><i></i><i></i><i></i><b></b><i></i><i></i><i></i><span>+2</span></div>
+                <h1 class="about-title">Здесь <em>творят</em> и хвастаются</h1>
+            </figure>
+            <div class="about-bio">
+                <p class="about-bio__lead">Привет, я {{ site_owner.name }}, и я только начал свой путь в коммерческой съёмке.</p>
+                <div class="about-bio__cols">
+                    <p>На данный момент я действующий фотограф медиа-центра и имею опыт в репортажной съёмке: снимаю концерты, мероприятия и всё, где бьёт ключом жизнь.</p>
+                    <p>Я с удовольствием приму любые заказы! Будь то сложный косплей-образ, шумный концерт или фото для меню.</p>
+                    <p>А этот сайт — моё портфолио, которое будет пополняться. Заглядывай, вдохновляйся и смело пиши, если хочешь создать что-то вместе.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 2: ДОСТИЖЕНИЯ — «Стопка» (выбрана владельцем по прототипу):
+             дипломы лежат стопкой, сверху текущий, рядом его текст и стрелки.
+             Нажатие на верхний диплом открывает его крупно, на другой — делает
+             его текущим. На телефоне листается свайпом. Ссылка — подписанной
+             строкой в тексте. Логика — script.js, секция «НАГРАДЫ». -->
+        <section class="about-awards">
+            <h2 class="details-title">Признание &amp; Опыт</h2>
+            {% if achievements %}
+            <div class="aw-stackbox" id="awards">
+                <div class="aw-stack" aria-label="Дипломы">
+                    {% for ach in achievements %}
+                    <button type="button" class="aw-card" data-index="{{ loop.index0 }}"
+                            data-full="{{ media_url(ach.image_url or ach.thumb_url) if (ach.image_url or ach.thumb_url) else '' }}">
+                        {% if ach.image_url or ach.thumb_url %}
+                        <img src="{{ media_url(ach.thumb_url or ach.image_url) }}" alt="{{ ach.title }}" loading="lazy">
+                        {% else %}
+                        <span class="aw-card-empty">{{ ach.title }}</span>
+                        {% endif %}
+                    </button>
+                    {% endfor %}
+                </div>
+                <div class="aw-side">
+                    {% if achievements|length > 1 %}<div class="aw-count" aria-live="polite">1 / {{ achievements|length }}</div>{% endif %}
+                    {% for ach in achievements %}
+                    <div class="aw-slide" data-index="{{ loop.index0 }}" {{ '' if loop.first else 'hidden' }}>
+                        <span class="aw-year">{{ ach.year }}</span>
+                        <h3 class="aw-title">{{ ach.title }}</h3>
+                        {% if ach.description %}<p class="aw-desc">{{ ach.description }}</p>{% endif %}
+                        {% if ach.link_url %}
+                        {# Подпись ссылки — по адресу, чтобы было понятно, куда она ведёт #}
+                        {% set host = (ach.link_url.split('/')[2] if '//' in ach.link_url else ach.link_url).replace('www.', '') %}
+                        <a class="aw-link" href="{{ ach.link_url }}" target="_blank" rel="noopener">
+                            {%- if host in ('vk.com', 'vk.ru', 'm.vk.com') -%}Пост ВКонтакте
+                            {%- elif host == 't.me' -%}Пост в Telegram
+                            {%- else -%}Новость на {{ host }}{%- endif -%}
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% if achievements|length > 1 %}
+                    <div class="aw-nav">
+                        <button type="button" data-step="-1" aria-label="Предыдущая награда"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+                        <button type="button" data-step="1" aria-label="Следующая награда"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Диплом крупно, на весь экран -->
+            <div class="aw-viewer" id="aw-viewer" role="dialog" aria-modal="true" aria-label="Диплом крупно">
+                <button type="button" class="aw-viewer-close" aria-label="Закрыть">
+                    <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+                <img src="" alt="">
+                <div class="aw-viewer-cap"></div>
+            </div>
+            {% else %}
+            <div class="aw-side">
+                <span class="aw-year">{{ current_year }}</span>
+                <h3 class="aw-title">Начало пути</h3>
+                <p class="aw-desc">Здесь появятся дипломы, благодарности и награды по мере съёмок.</p>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- БЛОК 3: ТЕХНИЧЕСКИЙ АРСЕНАЛ — камера + шкала фокусных.
+             ПК: силуэт Sony a6000, из байонета выходит горизонтальная
+             линейка 10–100 мм, объективы стоят на своих фокусных (зум —
+             отрезком). Телефон: линейка вертикальная и липкая, объективы
+             проезжают по одному, и загорается метка того, что в центре
+             экрана. Логика подсветки — script.js, секция "АРСЕНАЛ".
+             Объективы описаны ОДИН раз в gear_lenses ниже — из него
+             собираются обе линейки. Позиция на шкале: (мм − 10) / 90. -->
+        {% set gear_lenses = [
+            {'from': 18, 'to': 50, 'label': 34, 'f': '18–50', 'name': 'Sony E 18–50mm f/4–5.6', 'role': 'репортаж',
+             'desc': 'Штатный зум: от общего плана до среднего — концерты и мероприятия.'},
+            {'from': 58, 'to': 58, 'label': 58, 'f': '58', 'name': 'Helios 44К-4 f/2', 'role': 'винтаж',
+             'desc': 'Советская мануальная оптика с «закрученным» боке — для атмосферных кадров.'},
+            {'from': 85, 'to': 85, 'label': 85, 'f': '85', 'name': 'Viltrox 85mm f/1.8', 'role': 'портреты',
+             'desc': 'Резкость и мягкое боке для портретов.'},
+        ] %}
+        {% macro gear_pos(mm) %}{{ ((mm - 10) / 90 * 100) | round(3) }}{% endmacro %}
+        {% macro gear_camera(extra_class='') %}
+        <svg class="gear-cam {{ extra_class }}" viewBox="0 0 240 220" role="img" aria-label="Камера Sony α6000">
+            <text x="14" y="38" class="gear-cam__caption">Sony α6000</text>
+            <text x="14" y="58" class="gear-cam__sub">APS-C · 24,3 Мп</text>
+            <rect class="gear-cam__line" x="168" y="86" width="22" height="9" rx="2"/>
+            <ellipse class="gear-cam__line" cx="208" cy="92" rx="11" ry="4"/>
+            <rect class="gear-cam__line" x="10" y="95" width="220" height="95" rx="9"/>
+            <rect class="gear-cam__line gear-cam__grip" x="176" y="95" width="54" height="95" rx="9"/>
+            <text x="22" y="114" class="gear-cam__logo">SONY</text>
+            <circle class="gear-cam__line" cx="100" cy="150" r="37"/>
+            <circle class="gear-cam__line gear-cam__faint" cx="100" cy="150" r="29"/>
+            <circle class="gear-cam__dot" cx="100" cy="150" r="2.5"/>
+            <circle class="gear-cam__line gear-cam__faint" cx="160" cy="112" r="4"/>
+            <line class="gear-cam__link" x1="137" y1="150" x2="240" y2="150"/>
+        </svg>
+        {% endmacro %}
+        <section class="about-gear">
+            <h2 class="details-title">Технический арсенал</h2>
+
+            <!-- ПК -->
+            <div class="gear-desk">
+                {{ gear_camera() }}
+                <div class="gear-scale" data-gear-scale>
+                    <div class="gear-axis"></div>
+                    {% for mm in range(10, 95, 5) %}
+                    <div class="gear-tick{{ ' major' if mm % 10 == 0 }}" style="left: {{ gear_pos(mm) }}%">{% if mm % 10 == 0 %}<span>{{ mm }}</span>{% endif %}</div>
+                    {% endfor %}
+                    {% for l in gear_lenses %}
+                    {% if l.from == l.to %}
+                    <div class="gear-mark dot" data-i="{{ loop.index0 }}" style="left: {{ gear_pos(l.from) }}%"></div>
+                    {% else %}
+                    <div class="gear-mark range" data-i="{{ loop.index0 }}" style="left: {{ gear_pos(l.from) }}%; width: {{ ((l.to - l.from) / 90 * 100) | round(3) }}%"></div>
+                    {% endif %}
+                    <div class="gear-label" data-i="{{ loop.index0 }}" style="left: {{ gear_pos(l.label) }}%">
+                        <div class="gear-label__name">{{ l.name }}</div>
+                        <div class="gear-label__role">{{ l.role }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Телефон -->
+            <div class="gear-mob">
+                <div class="gear-mob__cam">{{ gear_camera('is-mob') }}</div>
+                <div class="gear-vr" data-gear-vr>
+                    <div class="gear-vr__ruler" aria-hidden="true">
+                        <div class="gear-vr__axis"></div>
+                        {% for mm in range(10, 95, 5) %}
+                        <div class="gear-vr__tick{{ ' major' if mm % 10 == 0 }}" style="top: {{ gear_pos(mm) }}%">{% if mm % 10 == 0 %}<span>{{ mm }}</span>{% endif %}</div>
+                        {% endfor %}
+                        {% for l in gear_lenses %}
+                        {% if l.from == l.to %}
+                        <div class="gear-vr__mark dot" data-i="{{ loop.index0 }}" style="top: {{ gear_pos(l.from) }}%"></div>
+                        {% else %}
+                        <div class="gear-vr__mark range" data-i="{{ loop.index0 }}" style="top: {{ gear_pos(l.from) }}%; height: {{ ((l.to - l.from) / 90 * 100) | round(3) }}%"></div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="gear-vr__cards">
+                        {% for l in gear_lenses %}
+                        <div class="gear-vr__card" data-i="{{ loop.index0 }}">
+                            <div class="gear-vr__f">{{ l.f }}<small>mm</small></div>
+                            <div class="gear-vr__name">{{ l.name }}</div>
+                            <div class="gear-vr__role">{{ l.role }}</div>
+                            <div class="gear-vr__desc">{{ l.desc }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- БЛОК 4: ИСПОЛЬЗОВАНИЕ ФОТОГРАФИЙ — тот же текст, что в окне
+             перед первым скачиванием в альбоме (общий _usage_terms.html) -->
+        <section class="about-usage" id="usage">
+            <h2 class="details-title">Использование фотографий</h2>
+            {% include "_usage_terms.html" %}
+        </section>
+
+        <!-- БЛОК 5: КОНТАКТЫ — «Список» (выбран владельцем по прототипу):
+             слева заголовок, справа строки «иконка · название · значение · стрелка».
+             Соцсети — из site_socials (иконка из БД красится маской, как в окне
+             «Связаться»), телефон и почта — из профиля. На ПК нажатие на телефон
+             или почту копирует их (script.js, «КОПИРОВАНИЕ ТЕЛЕФОНА И ПОЧТЫ»). -->
+        <section class="about-contact" id="contact">
+            <div class="contact-head">
+                <p class="contact-kicker"><i aria-hidden="true"></i>Открыт для съёмок</p>
+                <h2 class="contact-title">Готовы <em>создавать?</em></h2>
+                <p class="contact-desc">Свяжитесь со мной для бронирования даты или обсуждения вашей идеи.</p>
+            </div>
+            <div class="contact-list">
+                {% for s in site_socials %}
+                <a href="{{ s.link }}" class="contact-row" target="_blank" rel="noopener">
+                    <span class="contact-row__icon" style="--icon-url: url('{{ media_url(s.icon) }}');" aria-hidden="true"></span>
+                    <span class="contact-row__name">{{ s.title }}</span>
+                    <span class="contact-row__value">{{ s.link | link_handle }}</span>
+                    <svg class="contact-row__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
+                </a>
+                {% endfor %}
+                {% if site_owner and site_owner.phone %}
+                <a href="tel:{{ site_owner.phone }}" class="contact-row" data-copy-phone="{{ site_owner.phone | phone_pretty }}">
+                    <span class="contact-row__icon" style="--icon-url: url('{{ url_for('static', filename='icons/phone.svg') }}');" aria-hidden="true"></span>
+                    <span class="contact-row__name">Телефон</span>
+                    <span class="contact-row__value" data-copy-label>{{ site_owner.phone | phone_pretty }}</span>
+                    <svg class="contact-row__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
+                </a>
+                {% endif %}
+                {% if site_owner and site_owner.email %}
+                <a href="mailto:{{ site_owner.email }}" class="contact-row" data-copy-email="{{ site_owner.email }}">
+                    <svg class="contact-row__icon contact-row__icon--svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+                    <span class="contact-row__name">Почта</span>
+                    <span class="contact-row__value" data-copy-label>{{ site_owner.email }}</span>
+                    <svg class="contact-row__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
+                </a>
+                {% endif %}
+            </div>
+        </section>
+
+    </main>
+{% endblock %}

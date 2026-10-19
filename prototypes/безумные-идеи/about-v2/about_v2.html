@@ -1,0 +1,44 @@
+{% extends "about.html" %}
+{# Демо-версия «Обо мне» (/about-v2): в меню её нет, поисковикам закрыта —
+   открывается только по ссылке, для показа. Всё как в about.html, кроме
+   первого блока: полароид, который трясёт лапка Хоро (about-v2.css/.js). #}
+
+{% block extra_css %}
+    <meta name="robots" content="noindex, nofollow">
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/about-v2.css') }}">
+    <noscript><style>.paw-polaroid { --dev: 1 !important; }</style></noscript>
+{% endblock %}
+
+{% block about_hero %}
+{% set about_photo = site_owner.about_photo_url or site_owner.avatar_url %}
+{% set mfx = site_owner.about_mobile_focus_x if site_owner.about_mobile_focus_x is not none else 50 %}
+{% set mfy = site_owner.about_mobile_focus_y if site_owner.about_mobile_focus_y is not none else 30 %}
+        <section class="about-hero paw-hero">
+            <div class="paw-zone">
+                <figure class="paw-polaroid" style="--dev: 0; --mfx: {{ mfx }}%; --mfy: {{ mfy }}%;"
+                        aria-label="Полароид — потяни и встряхни, чтобы проявить">
+                    <span class="paw-polaroid__tape" aria-hidden="true"></span>
+                    <span class="paw-polaroid__img"><img src="{{ media_url(about_photo) }}" alt="{{ site_owner.name }} {{ site_owner.surname }}" draggable="false"></span>
+                    <figcaption>это я, {{ current_year }}</figcaption>
+                </figure>
+                <div class="paw-dev" aria-hidden="true"><i></i></div>
+                <img class="paw-paw" src="{{ url_for('static', filename='img/holo-paw.webp') }}" alt="" aria-hidden="true"
+                     width="320" height="569" draggable="false">
+            </div>
+            <div class="paw-text">
+                <h1 class="paw-title">Здесь <em>творят</em> и хвастаются</h1>
+                <div class="paw-bio">
+                    <p class="paw-bio__lead">Привет, я {{ site_owner.name }}, и я только начал свой путь в коммерческой съёмке.</p>
+                    <p>На данный момент я действующий фотограф медиа-центра и имею опыт в репортажной съёмке: снимаю концерты, мероприятия и всё, где бьёт ключом жизнь.</p>
+                    <p>Я с удовольствием приму любые заказы! Будь то сложный косплей-образ, шумный концерт или фото для меню.</p>
+                    <p>А этот сайт — моё портфолио, которое будет пополняться. Заглядывай, вдохновляйся и смело пиши, если хочешь создать что-то вместе.</p>
+                </div>
+                <p class="paw-sign">— {{ site_owner.name }}</p>
+            </div>
+        </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{{ url_for('static', filename='js/about-v2.js') }}" defer></script>
+{% endblock %}

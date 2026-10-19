@@ -1,0 +1,82 @@
+/* ПРОТОТИП: виды срока до удаления */
+.tm { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font: 600 0.66rem var(--font-ui); letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(255,255,255,.8); text-shadow: 0 1px 6px rgba(0,0,0,.75); pointer-events: auto; }
+.tm--hero { position: relative; z-index: 10; margin-top: 14px; }
+.gallery-card.is-light-top .tm { color: rgba(20,18,15,.82); text-shadow: 0 0 8px rgba(255,255,255,.6); }
+.tm-num { font-size: .95rem; color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .06em; }
+.gallery-card.is-light-top .tm-num { color: #141210; }
+.tm-dot { width: 7px; height: 7px; border-radius: 50%; background: #ff3b30; box-shadow: 0 0 8px rgba(255,59,48,.8); flex: none;
+  animation: tm-blink var(--blink, 1.6s) steps(1) infinite; }
+@keyframes tm-blink { 50% { opacity: .12; } }
+.tm.is-last .tm-num { color: #ff8b7d; }
+.tm-rec { color: #ff5a4a; letter-spacing: .12em; }
+
+/* Б — таймкод */
+.tm-b .tm-tc { font: 600 .92rem ui-monospace, 'Cascadia Mono', Consolas, monospace; color: #fff; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.gallery-card.is-light-top .tm-tc { color: #141210; }
+.tm-b .tm-cap { opacity: .75; }
+
+/* В — батарея */
+.tm-bat { position: relative; display: inline-flex; gap: 2px; padding: 2px; border: 1.5px solid currentColor; border-radius: 3px; margin-right: 3px; }
+.tm-bat::after { content: ''; position: absolute; right: -4px; top: 50%; width: 2px; height: 6px; margin-top: -3px; background: currentColor; border-radius: 0 1px 1px 0; }
+.tm-bat i { width: 4px; height: 9px; border-radius: 1px; background: currentColor; opacity: .15; }
+.tm-bat i.on { opacity: 1; background: #8be08b; }
+.tm.is-soon .tm-bat i.on { background: #ff5a4a; animation: tm-blink 1s steps(1) infinite; }
+.tm.is-last .tm-bat { color: #ff5a4a; animation: tm-blink .6s steps(1) infinite; }
+
+/* Г — самоспуск: лампа мигает чаще, чем меньше осталось */
+.tm-self { position: relative; display: inline-grid; place-items: center; width: 20px; height: 20px; }
+.tm-self svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.tm-self .tm-dot { position: absolute; right: -3px; top: -1px; width: 6px; height: 6px; background: #ff9f1a; box-shadow: 0 0 8px rgba(255,159,26,.9); }
+.tm.is-soon .tm-self .tm-dot { background: #ff3b30; box-shadow: 0 0 8px rgba(255,59,48,.9); }
+
+/* Д — окошко счётчика кадров плёночной камеры */
+.tm-counter { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #2b2620, #0d0c0b 75%); box-shadow: inset 0 0 0 2px rgba(255,255,255,.18), 0 2px 8px rgba(0,0,0,.5); }
+.tm-counter span { font: 700 .95rem var(--font-ui); color: #f4e9c8; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.tm.is-soon .tm-counter span { color: #ff8b7d; }
+.tm-cap2 { line-height: 1.25; letter-spacing: .12em; font-size: .6rem; text-align: left; }
+@media (prefers-reduced-motion: reduce) { .tm-dot, .tm-bat i.on, .tm.is-last .tm-bat { animation: none !important; } }
+
+/* ===== Минималистичные (Е–И): спокойный текст, без иконок, без мигания ===== */
+.tm-f .tm, .tm-g .tm, .tm-h .tm, .tm-i .tm { font: 500 0.72rem var(--font-ui); letter-spacing: 0.04em; text-transform: none; color: rgba(255,255,255,.78); text-shadow: 0 1px 2px rgba(0,0,0,.6), 0 0 10px rgba(0,0,0,.55); }
+.tm-f .tm.is-soon, .tm-g .tm.is-soon, .tm-h .tm.is-soon, .tm-i .tm.is-soon { color: #f0c24a; }
+.gallery-card.is-light-top .tm { color: rgba(20,18,15,.72); }
+.gallery-card.is-light-top .tm.is-soon { color: #9a6a00; }
+/* Ж — дата: курсив, как подпись под снимком */
+.tm-g .tm { font: italic 400 0.95rem var(--font-heading); letter-spacing: 0.02em; }
+/* З — точка и число */
+.tm-h .tm { gap: 6px; }
+.tm-pin { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .7; }
+.tm-h .tm .tm-num { font-size: .78rem; color: inherit; letter-spacing: 0; }
+/* И — тонкая линия оставшегося срока */
+.tm-i .tm { flex-direction: column; align-items: flex-end; gap: 5px; }
+.tm-i .tm--hero { align-items: center; }
+.tm-line { display: block; width: 72px; height: 1px; background: rgba(255,255,255,.22); }
+.tm-line i { display: block; height: 100%; background: currentColor; }
+.gallery-card.is-light-top .tm-line { background: rgba(20,18,15,.2); }
+
+/* ===== К–Н: ещё спокойнее ===== */
+.tm-j .tm, .tm-k .tm, .tm-l .tm, .tm-n .tm { font: 500 0.7rem var(--font-ui); letter-spacing: 0.06em; text-transform: none;
+  color: rgba(255,255,255,.75); text-shadow: 0 1px 2px rgba(0,0,0,.6), 0 0 10px rgba(0,0,0,.5); }
+.tm-j .tm.is-soon, .tm-k .tm.is-soon, .tm-l .tm.is-soon, .tm-n .tm.is-soon { color: #f0c24a; }
+/* К — «до 17.10», моноширинно, как дата в углу снимка */
+.tm-j .tm { font: 500 0.72rem ui-monospace, 'Cascadia Mono', Consolas, monospace; letter-spacing: .04em; }
+/* Л — число в уголках автофокуса */
+.tm-br { position: relative; padding: 3px 7px; --c: currentColor; --l: 5px; --t: 1px;
+  background:
+    linear-gradient(var(--c), var(--c)) left top / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) left top / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) right top / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) left bottom / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) right bottom / var(--t) var(--l) no-repeat; }
+/* М — нейтральная стеклянная таблетка */
+.tm-l .tm { padding: 4px 10px; border-radius: 999px; background: rgba(10,10,10,.45); border: 1px solid rgba(255,255,255,.14); text-shadow: none; }
+.tm-l .tm.is-soon { border-color: rgba(240,194,74,.45); }
+.tm-l .gallery-card.is-light-top .tm { color: #eae6dc; }
+/* Н — в строке с годом / датой съёмки */
+.tm-inline { text-transform: none; letter-spacing: .02em; opacity: .85; }
+.tm-inline.is-soon { color: #f0c24a; opacity: 1; }
+/* О — только при наведении на карточку */
+.tm-n .tm--card { opacity: 0; transform: translateY(-3px); transition: opacity .3s, transform .3s; }
+.tm-n .gallery-card:hover .tm--card, .tm-n .tm--card.is-soon { opacity: 1; transform: none; }
+.gallery-card.is-light-top .tm-j .tm, .tm-j .gallery-card.is-light-top .tm, .tm-k .gallery-card.is-light-top .tm, .tm-n .gallery-card.is-light-top .tm { color: rgba(20,18,15,.75); text-shadow: 0 0 8px rgba(255,255,255,.6); }

@@ -1,0 +1,13 @@
+# -*- coding: utf-8 -*-
+# Образец точки входа для Passenger (Beget). Настоящий passenger_wsgi.py лежит
+# только на сервере: в нём путь с логином аккаунта хостинга (<логин>).
+import os, sys
+sys.path.append('/home/a/<логин>/photo-site/scr')
+sys.path.append('/home/a/<логин>/photo-site/venv/lib/python3.10/site-packages')
+from scr import app as application # когда Flask стартует, он ищет application. Если не указать 'as application', сайт не заработает
+
+# ВАЖНО: интерактивный отладчик Werkzeug (DebuggedApplication с evalex=True)
+# не подключать здесь: он даёт любому посетителю Python-консоль в браузере
+# при необработанной ошибке, то есть выполнение кода на сервере. Отладчик —
+# только локально (FLASK_DEBUG=1), никогда на проде.
+application.debug = False

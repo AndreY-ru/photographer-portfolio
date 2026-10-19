@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Эмблема волчицы</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Manrope:wght@500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #0c0c0d; color: #eae6dc; font: 500 14px 'Manrope', sans-serif; }
+  header { padding: 18px 28px 6px; }
+  h1 { margin: 0 0 4px; font: 600 1.9rem 'Cormorant Garamond', serif; }
+  p { margin: 0; color: #8f8a80; max-width: 1060px; line-height: 1.5; }
+  .pick { display: flex; gap: 8px; padding: 14px 28px; flex-wrap: wrap; }
+  .pick button { text-align: left; border: 1px solid rgba(234,230,220,.14); background: none; color: #8f8a80; border-radius: 12px;
+    padding: 9px 14px; cursor: pointer; font: inherit; font-size: 12.5px; max-width: 300px; }
+  .pick button strong { display: block; color: #eae6dc; font: 600 1.1rem 'Cormorant Garamond', serif; margin-bottom: 2px; }
+  .pick button[aria-pressed="true"] { border-color: #e6b322; background: rgba(230,179,34,.07); }
+  .pick .star { border-color: rgba(230,179,34,.55); }
+  .row { display: flex; gap: 36px; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 4px 28px 24px; }
+  figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  figcaption { color: #8f8a80; }
+  figcaption a { color: #e6b322; }
+  .desk { --s: .55; width: calc(1440px * var(--s)); height: calc(900px * var(--s)); overflow: hidden; border-radius: 10px; box-shadow: 0 0 0 1px #2a2a2c; }
+  .desk iframe { width: 1440px; height: 900px; border: 0; transform: scale(var(--s)); transform-origin: 0 0; }
+  .phone { --s: .6; width: calc(390px * var(--s) + 16px); height: calc(844px * var(--s) + 16px); padding: 8px; border-radius: 36px; background: #000;
+    box-shadow: 0 0 0 2px #2a2a2c; overflow: hidden; }
+  .phone iframe { width: 390px; height: 844px; border: 0; border-radius: 30px; transform: scale(var(--s)); transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Эмблема волчицы в подвале — варианты</h1>
+  <p>Вместо «А с хвостиком». Всё остальное в подвале как сейчас: следы бегут к эмблеме, нажатие переключает режимы. Часть вариантов стоит в другом месте подвала.</p>
+</header>
+<div class="pick" id="pick">
+  <button data-v="now"><strong>Сейчас</strong>«А с хвостиком» над именем.</button>
+  <button data-v="wa"><strong>А — Профиль</strong>Голова волчицы одной линией: уши торчком, пушистая щека, глаз иногда моргает. Над именем.</button>
+  <button data-v="wb"><strong>Б — Колос</strong>Хоро — волчица урожая, живёт в пшенице. Изящный колос с остями стоит рядом с именем, как монограмма; качается, когда приходят следы.</button>
+  <button data-v="wc"><strong>В — Ушки над чертой</strong>Над верхней линией подвала выглядывают два волчьих уха. Пришли следы или навёл — уши дёргаются.</button>
+  <button data-v="wd"><strong>Г — Яблоко</strong>Любимое лакомство Хоро. Листик в форме волчьего уха, отгибается, когда приходят следы.</button>
+  <button data-v="we"><strong>Д — Печать</strong>Монета-печать в правом углу, как оттиск на письме: лапа в центре, по кругу «Великая волчица · Йойцу · Жатва». Наведёшь — поворачивается.</button>
+  <button data-v="wf"><strong>Е — Глаза</strong>В темноте подвала закрытые глаза. Пришли следы — открываются янтарным светом, моргают и следят за мышью. «Наблюдает» буквально.</button>
+</div>
+<div class="row">
+  <figure><div class="desk"><iframe id="fd" title="На компьютере"></iframe></div><figcaption>На компьютере · <a id="full" href="#" target="_blank">открыть на весь экран</a></figcaption></figure>
+  <figure><div class="phone"><iframe id="fp" title="На телефоне"></iframe></div><figcaption>На телефоне</figcaption></figure>
+</div>
+<script>
+  const pick = document.getElementById('pick');
+  const url = v => (v === 'now' ? '/about' : `/about?v=${v}`);
+  const show = v => {
+    document.getElementById('fd').src = url(v); document.getElementById('fp').src = url(v);
+    document.getElementById('full').href = url(v);
+    pick.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  };
+  // окна сразу прокручиваются к подвалу
+  for (const id of ['fd', 'fp']) document.getElementById(id).addEventListener('load', e => {
+    const w = e.target.contentWindow; setTimeout(() => w.scrollTo(0, w.document.body.scrollHeight), 400);
+  });
+  pick.addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(b.dataset.v); });
+  show(new URLSearchParams(location.search).get('v') || 'wa');
+</script>
+</body>
+</html>

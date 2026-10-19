@@ -1,0 +1,70 @@
+/* ПРОТОТИП эмблемы-волчицы в подвале */
+.wv .holo-icon { overflow: visible; }
+.wv .holo-icon .wv-line, .wv .holo-icon .wv-stem, .wv .holo-icon .wv-awn { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* А: ПРОФИЛЬ */
+.wv-a .holo-icon { width: 58px; height: 58px; }
+.wv-a .wv-eye { fill: currentColor; transform-origin: 59px 41px; animation: wv-blink 6s infinite; }
+@keyframes wv-blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(.1); } }
+.wv-a.is-arrived .wv-line path:first-child { filter: drop-shadow(0 0 6px rgba(230,179,34,.5)); }
+
+/* Б: КОЛОС рядом с именем */
+.wv-row { display: flex; align-items: center; gap: 4px; }
+.wv-b .wisewolf-seal { position: relative; padding: 0; }
+.wv-b .holo-icon { width: 46px; height: 46px; transform-origin: 50% 100%; transition: transform .6s cubic-bezier(.34,1.6,.64,1); }
+.wv-b .wv-stem { stroke-width: 2.2; }
+.wv-b .wv-awn { stroke-width: 1.3; opacity: .7; }
+.wv-b .wv-grains { fill: currentColor; fill-opacity: .18; stroke: currentColor; stroke-width: 1.8; }
+.wv-b .wisewolf-seal:hover .holo-icon { transform: rotate(-8deg); }
+.wv-b.is-arrived .holo-icon { animation: wv-sway 1.6s ease-in-out 2; }
+@keyframes wv-sway { 25% { transform: rotate(-7deg); } 75% { transform: rotate(5deg); } }
+.wv-b .wisewolf-text { margin-top: -14px; }
+.wv-b .footer-name { margin-top: 6px; }
+.wv-b .footer-content { gap: 22px; }
+
+/* В: УШКИ над верхней чертой подвала */
+.wv-c { overflow: visible; }
+.wv-c .footer-trail { overflow: hidden; }
+.wv-c .footer-content { padding-top: 40px; }
+.wv-c .wisewolf-seal { position: absolute; left: 50%; top: -27px; transform: translateX(-50%); padding: 0; gap: 4px; }
+.wv-c .holo-icon { width: 54px; height: 27px; }
+.wv-c .wv-ear { fill: currentColor; transform-box: fill-box; transform-origin: 50% 100%; }
+.wv-c .wv-in { fill: var(--base-bg); opacity: .55; }
+.wv-c .wisewolf-seal:hover .wv-ear--r, .wv-c.is-arrived .wv-ear--r { animation: wv-twitch .5s 2; }
+.wv-c.is-arrived .wv-ear--l { animation: wv-twitch .5s .25s 2; }
+@keyframes wv-twitch { 40% { transform: rotate(14deg); } }
+.wv-c .wisewolf-text { position: absolute; top: calc(100% + 8px); left: 50%; transform: translate(-50%, -6px); }
+.wv-c.is-watching .wisewolf-text { transform: translate(-50%, 0); }
+.wv-c.is-arrived .holo-icon { animation: none; }
+
+/* Г: ЯБЛОКО */
+.wv-d .holo-icon { width: 46px; height: 46px; }
+.wv-d .wv-leaf { fill: currentColor; fill-opacity: .85; transform-origin: 54px 24px; transition: transform .5s cubic-bezier(.34,1.6,.64,1); }
+.wv-d .wisewolf-seal:hover .wv-leaf, .wv-d.is-arrived .wv-leaf { transform: rotate(-14deg); }
+
+/* Д: ПЕЧАТЬ-МОНЕТА в правом нижнем углу */
+.wv-e .wisewolf-seal { position: absolute; right: 4vw; bottom: 22px; transform: rotate(-12deg); padding: 0; }
+.wv-e .holo-icon { width: 86px; height: 86px; transition: transform 1.4s cubic-bezier(.16,1,.3,1); }
+.wv-e .wisewolf-seal:hover .holo-icon { transform: rotate(40deg); }
+.wv-e .wv-c1 { fill: none; stroke: currentColor; stroke-width: 1.6; }
+.wv-e .wv-c2 { fill: none; stroke: currentColor; stroke-width: .8; stroke-dasharray: 2 3; }
+.wv-e .wv-txt { fill: currentColor; font: 700 8.6px var(--font-ui); letter-spacing: .5px; }
+.wv-e .wv-paw { fill: currentColor; }
+.wv-e .wisewolf-text { position: absolute; right: 100%; top: 50%; transform: translate(-10px, -50%) rotate(12deg); }
+.wv-e.is-watching .wisewolf-text { transform: translate(-14px, -50%) rotate(12deg); }
+.wv-e .footer-name { margin-top: 6px; }
+@media (max-width: 900px) {
+  .wv-e .wisewolf-seal { position: relative; right: auto; bottom: auto; order: -1; }
+  .wv-e .holo-icon { width: 70px; height: 70px; }
+  .wv-e .wisewolf-text { position: static; transform: rotate(12deg) translateY(-4px); }
+}
+
+/* Е: ГЛАЗА */
+.wv-f .holo-icon { width: 64px; height: 32px; }
+.wv-f .wv-eyes { transform-origin: 50% 50%; transform: scaleY(.12); transition: transform .45s cubic-bezier(.34,1.6,.64,1); }
+.wv-f.is-arrived .wv-eyes { transform: scaleY(1); animation: wv-blink2 7s 2s infinite; }
+@keyframes wv-blink2 { 0%, 95%, 100% { transform: scaleY(1); } 97.5% { transform: scaleY(.1); } }
+.wv-f .wv-eye { fill: #e0962a; filter: drop-shadow(0 0 5px rgba(230,150,40,.75)); }
+.wv-f:not(.is-arrived) .wv-eye { fill: currentColor; filter: none; }
+.wv-f .wv-pupil { fill: #140c05; transition: transform .25s; }
+.wv-f.is-arrived .holo-icon { filter: none; animation: none; }

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{# Превью ссылки: обложка первого альбома (см. base.html) #}
+{% set og_title = 'Галерея' %}
+{% if albums and (albums[0].cover_url or albums[0].cover_thumb_url) %}{% set og_image = albums[0].cover_url or albums[0].cover_thumb_url %}{% endif %}
+
+{% block title %}Галерея | {{ site_owner.name }} {{ site_owner.surname }}{% endblock %}
+{% block body_class %}fade-in gallery-body{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/gallery.css') }}">
+{% endblock %}
+
+{% block content %}
+    <main class="gallery-page">
+        <!-- ФИЛЬТР «Фокус-рамка» (выбран владельцем по прототипу): выбранная
+             категория — в уголках автофокуса, как в видоискателе. На ПК лента
+             прилипает к верху при прокрутке, на телефоне закреплены и шапка, и
+             фильтры под ней — листается только сетка (см. gallery.css). -->
+        <section class="filter-bar">
+            <div class="filter-container" id="filter-container">
+                <button class="filter-btn {{ 'active' if active_category == 'all' else '' }}" data-filter="all">
+                    Все работы <span class="filter-count">{{ total_count }}</span>
+                </button>
+                {% for c in categories %}
+                <button class="filter-btn {{ 'active' if active_category == c.slug else '' }}" data-filter="{{ c.slug }}">
+                    {{ c.name }} <span class="filter-count">{{ c.album_count }}</span>
+                </button>
+                {% endfor %}
+                <span class="filter-focus" id="filter-focus" aria-hidden="true"></span>
+            </div>
+        </section>
+
+        <!-- BENTO СЕТКА КАРТОЧЕК -->
+        <section class="editorial-grid" id="gallery-grid">
+            {% for album in albums %}
+            <article class="gallery-card {{ album.cover_ratio or 'type-square' }} reveal-up" data-category="{{ album.category_slug }}" data-color-hex="{{ album.color_hex or '' }}">
+                <a href="{{ url_for('album_detail', slug=album.slug) }}" class="card-image-link">
+                    <img src="{{ media_url(album.cover_thumb_url or album.cover_url) }}" alt="{{ album.title }}" loading="lazy"
+                         style="--cover-focus-x: {{ album.cover_focus_x if album.cover_focus_x is not none else 50 }}%; --cover-focus-y: {{ album.cover_focus_y if album.cover_focus_y is not none else 50 }}%; --cover-zoom: {{ album.cover_zoom if album.cover_zoom is not none else 1.0 }};">
+                </a>
+                <div class="card-overlay">
+                    <div class="card-top">
+                        <span class="card-tag">{{ album.category_name }}</span>
+                        {% with days = album.days_left %}{% include "_expiry_rec.html" %}{% endwith %}
+                    </div>
+                    <div class="card-bottom">
+                        <div class="card-info">
+                            <h3 class="card-title">{{ album.title }}</h3>
+                            {% if album.card_caption %}<div class="card-desc">{{ album.card_caption | markdown }}</div>{% endif %}
+                            {% set album_year = album.date_taken.year if album.date_taken else (album.created_at.year if album.created_at else '') %}
+                            {% if album_year %}<div class="card-subtext">{{ album_year }}</div>{% endif %}
+                        </div>
+                        <div class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+                    </div>
+                </div>
+            </article>
+            {% else %}
+            <p class="gallery-empty">Пока нет опубликованных альбомов — загляните позже.</p>
+            {% endfor %}
+        </section>
+    </main>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        // Если пришли по ссылке "Смотреть альбомы" с главной (?category=slug),
+        // сразу включаем нужный фильтр — сам клик по кнопке уже умеет это
+        // делать (см. static/js/script.js), здесь только имитируем его один раз.
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const wanted = params.get('category');
+            if (!wanted) return;
+            const btn = document.querySelector(`.filter-btn[data-filter="${CSS.escape(wanted)}"]`);
+            if (btn) btn.click();
+        });
+
+        // === Рамка фокуса на выбранном фильтре ===
+        // Сама фильтрация — в script.js (клик по .filter-btn переключает
+        // .active и прячет карточки). Здесь только рамка: стоит на активной
+        // кнопке, при наведении мышью «ищет фокус» на другой, после выбора
+        // коротко моргает — «фокус пойман».
+        (function setupFilterFocus() {
+            const strip = document.getElementById('filter-container');
+            const frame = document.getElementById('filter-focus');
+            if (!strip || !frame) return;
+            const btns = Array.from(strip.querySelectorAll('.filter-btn'));
+            const bar = strip.closest('.filter-bar');
+            const isPhone = () => window.matchMedia('(max-width: 768px)').matches;
+            const canHover = () => window.matchMedia('(hover: hover)').matches;
+            const activeBtn = () => strip.querySelector('.filter-btn.active') || btns[0];
+            let hovering = false;
+            let pendingBlink = false;
+
+            function place(btn) {
+                if (!btn) return;
+                frame.style.width = `${btn.offsetWidth + 18}px`;
+                frame.style.height = `${btn.offsetHeight + 12}px`;
+                frame.style.transform = `translate(${btn.offsetLeft - 9}px, ${btn.offsetTop - 6}px)`;
+            }
+            function blink() {
+                frame.classList.remove('is-blink');
+                void frame.offsetWidth; // перезапуск анимации
+                frame.classList.add('is-blink');
+            }
+            // Высота ленты — для панели данных камеры, которая на телефоне
+            // встаёт под фильтры, а не поверх них (см. gallery.css)
+            function measure() {
+                document.documentElement.style.setProperty('--filter-h', `${bar.offsetHeight}px`);
+                if (!hovering) place(activeBtn());
+            }
+
+            btns.forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    if (!canHover()) return;
+                    hovering = true;
+                    frame.classList.add('is-search');
+                    place(btn);
+                });
+                btn.addEventListener('mouseleave', () => {
+                    hovering = false;
+                    frame.classList.remove('is-search');
+                    place(activeBtn());
+                });
+                btn.addEventListener('click', () => {
+                    hovering = false;
+                    frame.classList.remove('is-search');
+                    pendingBlink = true;
+                    // Телефон: шапка и фильтры закреплены, после выбора —
+                    // к началу ленты альбомов, а не в середину опустевшей
+                    if (isPhone() && window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                // .active переключает script.js — рамка едет следом
+                new MutationObserver(() => {
+                    if (!btn.classList.contains('active')) return;
+                    place(btn);
+                    if (pendingBlink) { pendingBlink = false; blink(); }
+                }).observe(btn, { attributes: true, attributeFilter: ['class'] });
+            });
+
+            measure();
+            window.addEventListener('resize', measure);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+            // Телефон: выбранная категория при открытии видна целиком, с отступом от края
+            if (isPhone()) strip.scrollLeft = Math.max(0, activeBtn().offsetLeft - 24);
+        })();
+    </script>
+{% endblock %}

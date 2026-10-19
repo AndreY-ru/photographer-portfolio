@@ -1,0 +1,9 @@
+# Переводы строк в репозитории — LF (сервер на Linux), картинки и шрифты — как есть
+* text=auto eol=lf
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.webp binary
+*.ico binary
+*.ttf binary
+*.woff2 binary

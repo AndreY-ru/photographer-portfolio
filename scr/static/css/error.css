@@ -1,0 +1,60 @@
+/* ==========================================================================
+   СТРАНИЦЫ ОШИБОК 404 / 500 — «Нет фокуса» (выбран по прототипу
+   prototypes/error-pages, вариант А): рамка автофокуса ищет кадр и не находит.
+   error.html (с шапкой и подвалом) и error_static.html (запасная 500 без БД).
+   ========================================================================== */
+.err { min-height: calc(100vh - 220px); min-height: calc(100svh - 220px); display: grid; place-items: center;
+    padding: 140px 20px 60px; color: var(--text-main); font-family: var(--font-ui); text-align: center; }
+.err__in { max-width: 640px; display: flex; flex-direction: column; align-items: center; }
+.err__eyebrow { margin: 0 0 18px; font: 600 0.72rem var(--font-ui); letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--text-muted); }
+.err__title { margin: 0 0 14px; font: 500 clamp(2rem, 5vw, 3.2rem)/1.05 var(--font-heading); }
+.err__text { max-width: 460px; margin: 0 0 30px; color: var(--text-muted); line-height: 1.65; }
+.err__btns { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.err__btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 999px;
+    border: 1px solid var(--border-color); color: var(--text-main); text-decoration: none;
+    font: 600 0.85rem var(--font-ui); letter-spacing: 0.04em; transition: border-color .25s, background-color .25s, color .25s; }
+.err__btn:hover { border-color: var(--accent-wheat); color: var(--accent-wheat); }
+.err__btn--main { background: var(--accent-wheat); border-color: var(--accent-wheat); color: #141210; }
+.err__btn--main:hover { background: transparent; }
+
+/* Рамка автофокуса: уголки, большое число и «ищущая» жёлтая рамка.
+   Двигается только маленький квадрат (transform), без filter — главная и так тяжёлая. */
+.err-af { position: relative; display: grid; place-items: center; width: min(380px, 78vw); aspect-ratio: 3 / 2; margin-bottom: 52px; }
+.err-af__corner { position: absolute; width: 34px; height: 34px; border: 0 solid var(--text-main); opacity: .8; }
+.err-af__corner:nth-child(1) { left: 0; top: 0; border-width: 2px 0 0 2px; }
+.err-af__corner:nth-child(2) { right: 0; top: 0; border-width: 2px 2px 0 0; }
+.err-af__corner:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 2px 2px; }
+.err-af__corner:nth-child(4) { right: 0; bottom: 0; border-width: 0 2px 2px 0; }
+.err-af__box { position: absolute; width: 64px; height: 64px; border: 1.5px solid var(--accent-wheat); border-radius: 2px;
+    animation: errAfHunt 3.2s ease-in-out infinite; }
+@keyframes errAfHunt {
+    0%, 100% { transform: translate(-90px, -26px); }
+    25% { transform: translate(80px, -34px); }
+    50% { transform: translate(40px, 30px); }
+    75% { transform: translate(-60px, 22px); }
+}
+.err-af__num { font: 300 clamp(4.5rem, 14vw, 7.5rem)/1 var(--font-heading); letter-spacing: 0.04em; opacity: .9; }
+.err-af__hud { position: absolute; left: 0; right: 0; bottom: -28px; display: flex; justify-content: space-between;
+    font: 600 0.66rem var(--font-ui); letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-muted); }
+.err-af__hud b { font-weight: 600; color: var(--accent-wheat); animation: errBlink 1.6s steps(2) infinite; }
+@keyframes errBlink { 50% { opacity: .35; } }
+
+@media (max-width: 600px) {
+    .err-af__box { width: 48px; height: 48px; }
+    @keyframes errAfHunt {
+        0%, 100% { transform: translate(-60px, -20px); }
+        25% { transform: translate(55px, -24px); }
+        50% { transform: translate(28px, 22px); }
+        75% { transform: translate(-42px, 16px); }
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .err-af__box, .err-af__hud b { animation: none; }
+}
+
+/* Запасная 500 (error_static.html): без шапки, подвала и style.css */
+.err-static { margin: 0; min-height: 100vh; background: #080808; display: grid; place-items: center;
+    --text-main: #eae6dc; --text-muted: #8f8a80; --accent-wheat: #e6b322; --border-color: rgba(255, 255, 255, 0.12);
+    --font-heading: 'Cormorant Garamond', serif; --font-ui: 'Manrope', sans-serif; }
+.err-static .err { min-height: 0; padding: 40px 20px; }
