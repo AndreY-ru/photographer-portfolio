@@ -5,11 +5,14 @@
 **Портфолио, которое ведёт себя как камера.** Рамка автофокуса вместо курсора,
 диафрагма переключает тему, а клиенты отбирают кадры прямо в своём альбоме.
 
+### [→ Открыть сайт: andreygrugoriev.ru](https://andreygrugoriev.ru/)
+
 ![Python](https://img.shields.io/badge/Python-3.10-3776AB?logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3-000000?logo=flask&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JS-без%20фреймворков-F7DF1E?logo=javascript&logoColor=black)
 ![152-ФЗ](https://img.shields.io/badge/152--ФЗ-без%20внешних%20запросов-2ea44f)
+[![Сайт](https://img.shields.io/badge/сайт-andreygrugoriev.ru-e6b322)](https://andreygrugoriev.ru/)
 
 <img src="docs/readme/home.webp" alt="Главная: рамка автофокуса следует за курсором, направления меняют фото и цвет страницы" width="100%">
 
@@ -273,5 +276,6 @@ cd scr && FLASK_DEBUG=1 python __init__.py
 ---
 
 <div align="center">
-<sub>Фотографии на скриншотах — работы автора сайта, опубликованы с согласия моделей. Все права на фото защищены.</sub>
+<sub>Фотографии на скриншотах — работы автора сайта, опубликованы с согласия моделей. Все права на фото защищены.<br>
+Скриншоты сняты на тестовой копии: контакты, клиенты и сроки хранения на них выдуманные. Живая версия — <a href="https://andreygrugoriev.ru/">andreygrugoriev.ru</a>.</sub>
 </div>

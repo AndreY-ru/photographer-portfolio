@@ -29,8 +29,8 @@ avatar = next((f for f in sorted(os.listdir(UP)) if f.startswith("avatar_")), "x
 OWNER = dict(id=1, name="Андрей", surname="Григорьев", middle_name="", email="owner@example.com",
              phone="+79991234567", login="admin", hash_password=generate_password_hash("secret"), is_active=1,
              avatar_url="uploads/" + avatar, avatar_thumb_url=None,
-             about_photo_url=None, about_photo_thumb_url=None, about_focus_x=57, about_focus_y=20,
-             about_mobile_focus_x=60, about_mobile_focus_y=22, watermark_text="ВЕЛИКАЯ ХОРО МУДРАЯ", role_id=1,
+             about_photo_url=None, about_photo_thumb_url=None, about_focus_x=57, about_focus_y=23,
+             about_mobile_focus_x=57, about_mobile_focus_y=27, watermark_text="ВЕЛИКАЯ ХОРО МУДРАЯ", role_id=1,
              storage_limit_gb=(float(os.environ["FAKE_LIMIT"]) or None) if os.environ.get("FAKE_LIMIT") else 10)
 # Награды: картинки — prototypes/about-awards/dipl*.jpg (подменяются в HTML ниже)
 ACH = [dict(id=1, users_id=1, year="2026", title="Гран-при",
@@ -52,30 +52,42 @@ import datetime as _dt
 from PIL import Image as _Image
 _ALB_ROOT = os.path.join(UP, "albums")
 _today = _dt.date.today()
-CATS = [dict(id=1, slug="cosplay", name="Косплей", description="Образы, которые оживают в кадре", tagline="Персонажи"),
-        dict(id=2, slug="concerts", name="Концерты", description="Свет сцены, движение и эмоции зала", tagline="Сцена"),
-        dict(id=3, slug="nature", name="Природа", description="Туман, свет и тишина", tagline="Пейзаж")]
+# Категории, направления, обложки, цвета и порядок фото — как на рабочем сайте
+# (взято с его публичных страниц 19.10.2026; порядок фото — showcase_order.json).
+CATS = [dict(id=1, slug="meropriiatiia", name="Мероприятия", tagline="Концерты & Драйв",
+             description="Репортажная съемка. Эмоции, атмосфера, детали."),
+        dict(id=2, slug="kosplei", name="Косплей", tagline="Персонажи & Свет",
+             description="Живые уличные фотосессии. Помогу подобрать подходящую локацию, составлю маршрут и ракурсы для вашего образа."),
+        dict(id=3, slug="atmosfera", name="Атмосфера", tagline="Природа & Созерцание",
+             description="Свободное творчество. Мои личные проекты и фотоэксперименты.")]
 _CAT = {c["slug"]: c for c in CATS}
-# (папка, slug, название, категория, формат обложки, цвет, дней до удаления, отбор, обложка, подпись)
+_MARA = "Косплеер: [Мара](https://vk.ru/dont_be_shyyyyy)"
+# (папка, slug, название, категория, формат карточки, цвет, дней до удаления (витрина), отбор,
+#  обложка full, обложка mobile, фокус обложки x/y, масштаб, подпись, дата съёмки)
 ALBUM_SPECS = [
-    ("kosplei-miku-b62d1e_4", "miku", "Мику: летний день", "cosplay", "type-wide", "#2f5f66", 5, 1, 8,
-     "Солнечная набережная, бирюзовые хвосты и немного вокалоида"),
-    ("kosplei-miku-fb8b9d_3", "miku-night", "Мику: ночной город", "cosplay", "type-tall", "#1b2442", 2, 1, 2,
-     "Неон, фонари и огни колеса обозрения"),
-    ("vypusk-626222_5", "vypusk", "Выпуск", "concerts", "type-square", "#1d2a63", None, 0, 3,
-     "Выпускной концерт: танцы, свет и зал с фонариками"),
-    ("tsvety-2b049d_6", "tsvety", "Цветы", "nature", "type-square", "#3a4a5e", 20, 0, 0,
-     "Туманное утро и свет сквозь листву"),
+    ("kosplei-miku-fb8b9d_3", "kosplei-miku-fb8b9d", "Косплей Мику", "kosplei", "type-square", "#de8773", 2, 1,
+     "cover_92a43fc5.jpg", "covm_621ebf35.jpg", 80, 50, 1.0, _MARA, _dt.date(2025, 10, 4)),
+    ("kosplei-miku-b62d1e_4", "kosplei-miku-b62d1e", "Косплей Мику", "kosplei", "type-horizontal", "#eee8dc", 5, 1,
+     "cover_05023dd3.jpg", "covm_b524b9f3.jpg", 50, 50, 1.0, _MARA, _dt.date(2026, 7, 6)),
+    ("vypusk-626222_5", "vypusk-626222", "Выпуск", "meropriiatiia", "type-horizontal", "#051b5a", None, 0,
+     "cover_561851ff.jpg", "covm_b82b829d.jpg", 50, 50, 1.1, None, _dt.date(2026, 6, 27)),
+    ("tsvety-2b049d_6", "tsvety-2b049d", "Цветы", "atmosfera", "type-square", "#060911", None, 0,
+     "cover_7e17460e.jpg", "covm_4d205e7c.jpg", 50, 50, 1.0, None, _dt.date(2026, 5, 18)),
 ]
+import json as _json
+_ORDER_FILE = os.path.join(HERE, "showcase_order.json")
+_ORDER = _json.load(open(_ORDER_FILE, encoding="utf-8")) if os.path.isfile(_ORDER_FILE) else {}
 EXIF_SETS = [("Sony ILCE-6000", "E 18-55mm F3.5-5.6 OSS", "35 мм", "1/250", "f/5.6", "ISO 100", None, None),
              ("Sony ILCE-6000", "Sigma 30mm F1.4 DC DN", "30 мм", "1/160", "f/1.4", "ISO 800", "-0.3 EV", None),
              ("Sony ILCE-6000", "Sigma 56mm F1.4 DC DN", "56 мм", "1/320", "f/1.8", "ISO 1600", None, None)]
 PHOTOS_BY_ALBUM, PHOTOS, ALBUMS = {}, [], []
-for (_dir, _slug, _title, _cat, _ratio, _hex, _days, _sel, _cov, _cap) in ALBUM_SPECS:
+for (_dir, _slug, _title, _cat, _ratio, _hex, _days, _sel, _cfull, _cmob, _fx, _fy, _zoom, _cap, _date) in ALBUM_SPECS:
     _aid = int(_dir.rsplit("_", 1)[1])
     _tdir = os.path.join(_ALB_ROOT, _dir, "thumb")
+    _files = sorted(os.listdir(_tdir)) if os.path.isdir(_tdir) else []
+    _files = [f for f in _ORDER.get(_dir, []) if f in _files] + [f for f in _files if f not in _ORDER.get(_dir, [])]
     _photos = []
-    for _i, _f in enumerate(sorted(os.listdir(_tdir)) if os.path.isdir(_tdir) else [], 1):
+    for _i, _f in enumerate(_files, 1):
         try:
             _w, _h = _Image.open(os.path.join(_tdir, _f)).size
         except Exception:
@@ -95,25 +107,30 @@ for (_dir, _slug, _title, _cat, _ratio, _hex, _days, _sel, _cov, _cap) in ALBUM_
                             focus_x=50, focus_y=50, zoom=1.0))
     PHOTOS_BY_ALBUM[_aid] = _photos
     PHOTOS += _photos
-    _c = _photos[min(_cov, len(_photos) - 1)] if _photos else None
+    _cov = lambda sub, name: f"uploads/albums/{_dir}/{sub}/{name}" if os.path.isfile(os.path.join(_ALB_ROOT, _dir, sub, name)) else None
+    _cover = _cov("cover_full", _cfull) or (_photos[0]["file_url"] if _photos else "uploads/" + avatar)
     ALBUMS.append(dict(id=_aid, slug=_slug, title=_title, description=_cap, card_caption=_cap,
-                       cover_url=_c["file_url"] if _c else "uploads/" + avatar,
-                       cover_thumb_url=_c["thumb_url"] if _c else "uploads/" + avatar,
-                       cover_mobile_url=None, cover_ratio=_ratio, color_hex=_hex, cover_focus_x=50, cover_focus_y=40, cover_zoom=1.0,
-                       date_taken=_dt.date(2026, 7, 6), created_at=_dt.datetime(2026, 9, 1),
+                       cover_url=_cover,
+                       cover_thumb_url=_cov("cover_thumb", "thumb_" + _cfull) or _cover,
+                       cover_mobile_url=_cov("cover_mobile", _cmob), cover_ratio=_ratio, color_hex=_hex,
+                       cover_focus_x=_fx, cover_focus_y=_fy, cover_zoom=_zoom,
+                       date_taken=_date, created_at=_dt.datetime(2026, 9, 1),
                        expires_at=_today + _dt.timedelta(days=_days) if _days is not None else None,
                        category_slug=_cat, category_name=_CAT[_cat]["name"], is_active=1, is_private=0, allow_selection=_sel,
                        require_client_info=_sel, is_watermark_enabled=0, access_token="tok" + str(_aid), user_id=1,
                        category_id=_CAT[_cat]["id"]))
 
-# Направления на главной — по одному кадру из альбомов
-def _dir_photo(album_id, idx):
-    ph = PHOTOS_BY_ALBUM.get(album_id) or []
-    return ph[min(idx, len(ph) - 1)]["file_url"] if ph else "uploads/" + avatar
-DIRS = [dict(id=i, file_url=_dir_photo(aid, idx), thumb_url=None, mobile_url=None, color_hex=hx,
-             mobile_focus_x=50, mobile_focus_y=40, mobile_zoom=1.0, category_slug=slug, category_name=_CAT[slug]["name"],
-             category_description=_CAT[slug]["description"], category_tagline=_CAT[slug]["tagline"], category_id=_CAT[slug]["id"])
-        for i, (slug, aid, idx, hx) in enumerate([("cosplay", 4, 8, "#2f5f66"), ("concerts", 5, 3, "#1d2a63"), ("nature", 6, 0, "#3a4a5e")], 1)]
+# Направления на главной — те же фото, мобильные кадры и цвета, что на рабочем сайте
+def _up(path):
+    return path if os.path.isfile(os.path.join(UP, path[len("uploads/"):])) else None
+DIRS = [dict(id=i, file_url=_up(f"uploads/directions/{f}") or "uploads/" + avatar, thumb_url=_up(f"uploads/directions/thumb_{f}"),
+             mobile_url=_up(f"uploads/directions/{m}"), color_hex=hx, mobile_focus_x=mx, mobile_focus_y=my, mobile_zoom=1.0,
+             category_slug=slug, category_name=_CAT[slug]["name"], category_description=_CAT[slug]["description"],
+             category_tagline=_CAT[slug]["tagline"], category_id=_CAT[slug]["id"])
+        for i, (slug, f, m, hx, mx, my) in enumerate([
+            ("meropriiatiia", "dir_237b4bb4.jpg", "dirm_4499dd7c.jpg", "#051359", 50, 50),
+            ("kosplei", "dir_2c939674.jpg", "dirm_34930772.jpg", "#eee8dc", 45, 52),
+            ("atmosfera", "dir_2e51bdb1.jpg", "dirm_d9ac3dc2.jpg", "#060910", 50, 50)], 1)]
 
 # Выдуманные клиенты альбома с отбором — для «Выбора клиентов» в админке
 CLIENTS = [dict(session_uuid="s-anna", client_name="Анна", created_at=_dt.datetime(2026, 10, 12, 18, 40),

@@ -16,7 +16,7 @@ module.exports = async (browser) => {
   if (want('site')) {
     const { ctx, p } = await newPage(browser, { width: 1440, height: 900 });
     // Альбом: обложка со сроком и сетка с сердечками
-    await p.goto(B + '/album/miku', { waitUntil: 'networkidle' }); await p.addStyleTag({ content: NOGRAIN }); await wait(p, 1800);
+    await p.goto(B + '/album/kosplei-miku-b62d1e', { waitUntil: 'networkidle' }); await p.addStyleTag({ content: NOGRAIN }); await wait(p, 1800);
     await p.evaluate(() => document.getElementById('vf-island-collapse')?.click()); await wait(p, 500);
     await p.screenshot({ path: S + 'album_cover.jpg', quality: 88 });
     await p.evaluate(() => window.scrollTo(0, document.querySelector('.photo-card').getBoundingClientRect().top + scrollY - 40)); await wait(p, 1200);
@@ -72,7 +72,7 @@ module.exports = async (browser) => {
 
   if (want('phone')) {
     const { ctx, p } = await newPage(browser, { width: 390, height: 844 }, { dpr: 2, mobile: true });
-    for (const [u, n, w] of [['/', 'm_home', 5200], ['/gallery', 'm_gallery', 1800], ['/album/miku', 'm_album', 1800], ['/about', 'm_about', 1800]]) {
+    for (const [u, n, w] of [['/', 'm_home', 5200], ['/gallery', 'm_gallery', 1800], ['/album/kosplei-miku-b62d1e', 'm_album', 1800], ['/about', 'm_about', 1800]]) {
       await p.goto(B + u, { waitUntil: 'networkidle' }); await p.addStyleTag({ content: NOGRAIN }); await wait(p, w);
       if (n === 'm_gallery') { await p.evaluate(() => document.getElementById('vf-toggle-mobile')?.click()); await wait(p, 700); }
       if (n === 'm_album') { await p.evaluate(() => window.scrollTo(0, document.querySelector('.photo-card').getBoundingClientRect().top + scrollY - 70)); await wait(p, 1000); }

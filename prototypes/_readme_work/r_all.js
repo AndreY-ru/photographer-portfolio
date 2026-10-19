@@ -69,7 +69,7 @@ module.exports = async (browser) => {
 
   // 4. Альбом: открыть фото, листать, данные съёмки
   if (want('album')) {
-    const { ctx, p } = await open('/album/miku-night', 1500);
+    const { ctx, p } = await open('/album/kosplei-miku-fb8b9d', 1500);
     await p.evaluate(() => window.scrollTo(0, document.querySelector('.photo-card').getBoundingClientRect().top + scrollY - 90)); await wait(p, 600);
     await p.mouse.move(700, 500);
     res.album = await rec(p, 'album', async () => {
