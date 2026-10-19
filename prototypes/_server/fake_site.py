@@ -41,49 +41,86 @@ ACH = [dict(id=1, users_id=1, year="2026", title="Гран-при",
             link_url="https://vk.ru/wall-223192623_513", image_url="__P__dipl2.jpg", thumb_url=None, sort_order=1),
        dict(id=3, users_id=1, year="2025", title="Без ссылки и описания", description=None, link_url=None,
             image_url="__P__dipl1.jpg", thumb_url=None, sort_order=2)]
-# Направления для главной (чтобы на телефоне было что листать) — картинка та же, что у аватара
-DIRS = [dict(id=i, file_url="uploads/" + avatar, thumb_url=None, mobile_url=None, color_hex=hx,
-             mobile_focus_x=50, mobile_focus_y=40, mobile_zoom=1.0, category_slug=slug, category_name=nm,
-             category_description="Тестовое описание категории", category_tagline="Тест")
-        for i, (slug, nm, hx) in enumerate([("concerts", "Концерты", "#7a4a2a"), ("cosplay", "Косплей", "#2a4a7a"), ("food", "Еда", "#4a7a2a")], 1)]
 SOCIAL = [dict(id=1, link="https://t.me/example", title="Telegram", icon="icons/telegram.svg"),
           dict(id=2, link="https://vk.com/example", title="ВКонтакте", icon="icons/vk.svg")]
 
-# Тестовые альбомы для страниц /gallery и /album/<slug>: миниатюры берутся из
-# первого локального альбома в static/uploads/albums (свои фото владельца,
-# никуда не уходят). Нет папки — альбомы просто пустые.
+# Альбомы витрины: фото берутся из локальных папок static/uploads/albums/<slug>_<id>
+# (свои фото владельца, никуда не уходят; владелец разрешил показывать их в README).
+# Нет папки — альбом просто пустой. id альбома = id из имени папки, чтобы кольцо
+# «Память» в админке нашло вес по папке.
 import datetime as _dt
 from PIL import Image as _Image
 _ALB_ROOT = os.path.join(UP, "albums")
-_alb_dir = next((d for d in sorted(os.listdir(_ALB_ROOT)) if os.path.isdir(os.path.join(_ALB_ROOT, d, "thumb"))), None) if os.path.isdir(_ALB_ROOT) else None
-PHOTOS = []
-if _alb_dir:
-    for _i, _f in enumerate(sorted(os.listdir(os.path.join(_ALB_ROOT, _alb_dir, "thumb")))[:18], 1):
+_today = _dt.date.today()
+CATS = [dict(id=1, slug="cosplay", name="Косплей", description="Образы, которые оживают в кадре", tagline="Персонажи"),
+        dict(id=2, slug="concerts", name="Концерты", description="Свет сцены, движение и эмоции зала", tagline="Сцена"),
+        dict(id=3, slug="nature", name="Природа", description="Туман, свет и тишина", tagline="Пейзаж")]
+_CAT = {c["slug"]: c for c in CATS}
+# (папка, slug, название, категория, формат обложки, цвет, дней до удаления, отбор, обложка, подпись)
+ALBUM_SPECS = [
+    ("kosplei-miku-b62d1e_4", "miku", "Мику: летний день", "cosplay", "type-wide", "#2f5f66", 5, 1, 8,
+     "Солнечная набережная, бирюзовые хвосты и немного вокалоида"),
+    ("kosplei-miku-fb8b9d_3", "miku-night", "Мику: ночной город", "cosplay", "type-tall", "#1b2442", 2, 1, 2,
+     "Неон, фонари и огни колеса обозрения"),
+    ("vypusk-626222_5", "vypusk", "Выпуск", "concerts", "type-square", "#1d2a63", None, 0, 3,
+     "Выпускной концерт: танцы, свет и зал с фонариками"),
+    ("tsvety-2b049d_6", "tsvety", "Цветы", "nature", "type-square", "#3a4a5e", 20, 0, 0,
+     "Туманное утро и свет сквозь листву"),
+]
+EXIF_SETS = [("Sony ILCE-6000", "E 18-55mm F3.5-5.6 OSS", "35 мм", "1/250", "f/5.6", "ISO 100", None, None),
+             ("Sony ILCE-6000", "Sigma 30mm F1.4 DC DN", "30 мм", "1/160", "f/1.4", "ISO 800", "-0.3 EV", None),
+             ("Sony ILCE-6000", "Sigma 56mm F1.4 DC DN", "56 мм", "1/320", "f/1.8", "ISO 1600", None, None)]
+PHOTOS_BY_ALBUM, PHOTOS, ALBUMS = {}, [], []
+for (_dir, _slug, _title, _cat, _ratio, _hex, _days, _sel, _cov, _cap) in ALBUM_SPECS:
+    _aid = int(_dir.rsplit("_", 1)[1])
+    _tdir = os.path.join(_ALB_ROOT, _dir, "thumb")
+    _photos = []
+    for _i, _f in enumerate(sorted(os.listdir(_tdir)) if os.path.isdir(_tdir) else [], 1):
         try:
-            _w, _h = _Image.open(os.path.join(_ALB_ROOT, _alb_dir, "thumb", _f)).size
+            _w, _h = _Image.open(os.path.join(_tdir, _f)).size
         except Exception:
             continue
         _r = _w / _h
-        _url = f"uploads/albums/{_alb_dir}/thumb/{_f}"
-        PHOTOS.append(dict(id=100 + _i, album_id=1, file_url=_url, thumb_url=_url, watermark_url=None, is_spacer=0,
-                           grid_class_slug="ratio-hor" if _r >= 1.15 else "ratio-ver" if _r <= 0.85 else "ratio-sq",
-                           width=_w, height=_h, sort_order=_i, title=None, description=None, original_filename=_f.split("_", 1)[-1],
-                           exif_camera="Sony ILCE-6000", exif_lens="E 18-55mm", exif_focal="35 мм", exif_speed="1/250",
-                           exif_aperture="f/2.8", exif_iso="ISO 400", exif_ev=None, exif_flash=None))
-_cover = PHOTOS[0]["file_url"] if PHOTOS else "uploads/" + avatar
-_today = _dt.date.today()
-ALBUMS = [dict(id=i, slug=sl, title=t, description="Тестовый альбом для прототипов", card_caption=None,
-               cover_url=PHOTOS[k % max(1, len(PHOTOS))]["file_url"] if PHOTOS else _cover,
-               cover_thumb_url=PHOTOS[k % max(1, len(PHOTOS))]["file_url"] if PHOTOS else _cover,
-               cover_mobile_url=None, cover_ratio=rt, color_hex=hx, cover_focus_x=50, cover_focus_y=40, cover_zoom=1.0,
-               date_taken=_dt.date(2026, 7, 6), created_at=_dt.datetime(2026, 9, 1), expires_at=exp,
-               category_slug="cosplay", category_name="Косплей", is_active=1, is_private=0, allow_selection=sel,
-               require_client_info=0, is_watermark_enabled=0, access_token="tok" + str(i), user_id=1, category_id=1)
-          for i, k, sl, t, rt, hx, exp, sel in [
-              (1, 0, "miku", "Косплей Мику", "type-wide", "#3a5a7a", _today + _dt.timedelta(days=5), 1),
-              (2, 3, "zakat", "Закат на пирсе", "type-tall", "#7a4a2a", _today + _dt.timedelta(days=1), 1),
-              (3, 6, "park", "Прогулка в парке", "type-square", "#4a6a3a", _today + _dt.timedelta(days=20), 1),
-              (4, 9, "fontan", "У фонтана", "type-square", "#5a4a6a", _today, 0)]]
+        _full = f"uploads/albums/{_dir}/full/{_f}"
+        _thumb = f"uploads/albums/{_dir}/thumb/{_f}"
+        _ex = EXIF_SETS[_i % len(EXIF_SETS)]
+        _photos.append(dict(id=_aid * 100 + _i, album_id=_aid,
+                            file_url=_full if os.path.isfile(os.path.join(UP, _full[len("uploads/"):])) else _thumb,
+                            thumb_url=_thumb, watermark_url=None, is_spacer=0,
+                            grid_class_slug="ratio-hor" if _r >= 1.15 else "ratio-ver" if _r <= 0.85 else "ratio-sq",
+                            width=_w, height=_h, sort_order=_i, title=None, description=None,
+                            original_filename=f"DSC0{4200 + _aid * 37 + _i}.ARW",
+                            exif_camera=_ex[0], exif_lens=_ex[1], exif_focal=_ex[2], exif_speed=_ex[3],
+                            exif_aperture=_ex[4], exif_iso=_ex[5], exif_ev=_ex[6], exif_flash=_ex[7],
+                            focus_x=50, focus_y=50, zoom=1.0))
+    PHOTOS_BY_ALBUM[_aid] = _photos
+    PHOTOS += _photos
+    _c = _photos[min(_cov, len(_photos) - 1)] if _photos else None
+    ALBUMS.append(dict(id=_aid, slug=_slug, title=_title, description=_cap, card_caption=_cap,
+                       cover_url=_c["file_url"] if _c else "uploads/" + avatar,
+                       cover_thumb_url=_c["thumb_url"] if _c else "uploads/" + avatar,
+                       cover_mobile_url=None, cover_ratio=_ratio, color_hex=_hex, cover_focus_x=50, cover_focus_y=40, cover_zoom=1.0,
+                       date_taken=_dt.date(2026, 7, 6), created_at=_dt.datetime(2026, 9, 1),
+                       expires_at=_today + _dt.timedelta(days=_days) if _days is not None else None,
+                       category_slug=_cat, category_name=_CAT[_cat]["name"], is_active=1, is_private=0, allow_selection=_sel,
+                       require_client_info=_sel, is_watermark_enabled=0, access_token="tok" + str(_aid), user_id=1,
+                       category_id=_CAT[_cat]["id"]))
+
+# Направления на главной — по одному кадру из альбомов
+def _dir_photo(album_id, idx):
+    ph = PHOTOS_BY_ALBUM.get(album_id) or []
+    return ph[min(idx, len(ph) - 1)]["file_url"] if ph else "uploads/" + avatar
+DIRS = [dict(id=i, file_url=_dir_photo(aid, idx), thumb_url=None, mobile_url=None, color_hex=hx,
+             mobile_focus_x=50, mobile_focus_y=40, mobile_zoom=1.0, category_slug=slug, category_name=_CAT[slug]["name"],
+             category_description=_CAT[slug]["description"], category_tagline=_CAT[slug]["tagline"], category_id=_CAT[slug]["id"])
+        for i, (slug, aid, idx, hx) in enumerate([("cosplay", 4, 8, "#2f5f66"), ("concerts", 5, 3, "#1d2a63"), ("nature", 6, 0, "#3a4a5e")], 1)]
+
+# Выдуманные клиенты альбома с отбором — для «Выбора клиентов» в админке
+CLIENTS = [dict(session_uuid="s-anna", client_name="Анна", created_at=_dt.datetime(2026, 10, 12, 18, 40),
+                pd_consent_at=_dt.datetime(2026, 10, 12, 18, 40), pd_consent_version="2026-10-02", picks=[0, 2, 4, 7, 9, 11]),
+           dict(session_uuid="s-maria", client_name="Мария", created_at=_dt.datetime(2026, 10, 13, 10, 5),
+                pd_consent_at=_dt.datetime(2026, 10, 13, 10, 5), pd_consent_version="2026-10-02", picks=[1, 2, 5, 8])]
+LIKES = [3, 0, 2, 0, 5, 1, 0, 2, 4, 1, 0, 3]   # сколько человек отметили фото (по порядку в альбоме)
 
 
 ATTEMPTS = []   # неудачные входы (login_attempts)
@@ -116,14 +153,27 @@ class Cursor:
         if "FROM social_media" in self.last: return [dict(x) for x in SOCIAL]
         if "FROM achievements" in self.last: return [dict(x) for x in ACH]
         if "FROM directions d" in self.last: return [dict(x) for x in DIRS]
-        if "FROM photo_album a" in self.last: return [dict(a) for a in ALBUMS]   # раньше «FROM photo p»: в списке альбомов админки есть подзапрос по фото
-        if "FROM photo p" in self.last: return [dict(x) for x in PHOTOS]
+        if "COUNT(a.id) AS album_count" in self.last:   # фильтры галереи
+            return [dict(slug=c["slug"], name=c["name"], album_count=sum(a["category_slug"] == c["slug"] for a in ALBUMS)) for c in CATS]
+        if "FROM photo_album a" in self.last:   # раньше «FROM photo p»: в списке альбомов админки есть подзапрос по фото
+            return [dict(a, total_likes=sum(LIKES[:len(PHOTOS_BY_ALBUM.get(a["id"], []))]) if a["allow_selection"] else 0,
+                         photo_count=len(PHOTOS_BY_ALBUM.get(a["id"], []))) for a in ALBUMS]
+        if "FROM photo p" in self.last:
+            aid = self.params[0] if self.params else None
+            return [dict(x) for x in PHOTOS_BY_ALBUM.get(aid, PHOTOS)]
         if "original_filename FROM photo" in self.last: return [dict(x) for x in PHOTOS]
+        if "FROM client_sessions" in self.last and "access_token" in self.last:   # клиенты альбома
+            return [{k: v for k, v in c.items() if k != "picks"} for c in CLIENTS] if self.params == ("tok4",) else []
+        if "FROM client_selections cs" in self.last and "WHERE cs.session_uuid" in self.last:   # что отобрал клиент
+            c = next((c for c in CLIENTS if c["session_uuid"] == self.params[0]), None)
+            ph = PHOTOS_BY_ALBUM.get(4, [])
+            return [dict(id=ph[i]["id"], thumb_url=ph[i]["thumb_url"], file_url=ph[i]["file_url"], title=None,
+                         original_filename=ph[i]["original_filename"]) for i in (c["picks"] if c else []) if i < len(ph)]
         if "FROM client_selections cs" in self.last:   # сколько человек отметили фото
-            rows = [dict(photo_id=ph["id"], n=n) for ph, n in zip(PHOTOS, [3, 0, 1, 0, 5, 2, 0, 0, 1, 4]) if n]
+            aid = next((a["id"] for a in ALBUMS if self.params and a["access_token"] == self.params[0]), None)
+            rows = [dict(photo_id=ph["id"], n=n) for ph, n in zip(PHOTOS_BY_ALBUM.get(aid, []), LIKES) if n]
             return [r for r in rows if not (self.params and len(self.params) > 1) or r["photo_id"] == self.params[1]]
-        if "COUNT(a.id) AS album_count" in self.last: return [dict(slug="cosplay", name="Косплей", album_count=len(ALBUMS))]
-        if "FROM photo_album a" in self.last: return [dict(a) for a in ALBUMS]
+        if "FROM category" in self.last: return [dict(c, is_active=1) for c in CATS]
         return []
 
 

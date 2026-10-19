@@ -38,3 +38,10 @@ db/*
 # Прототипы дизайна: окружение тестового сервера и твои реальные дипломы
 prototypes/.venv/
 prototypes/about-awards/*.jpg
+
+# Запись картинок для README: скрипты в git, кадры и черновики — нет
+prototypes/_readme_work/rec/
+prototypes/_readme_work/shots/
+prototypes/_readme_work/*.jpg
+prototypes/_readme_work/*.png
+prototypes/_readme_work/preview.html
